@@ -8,8 +8,19 @@ public class FakeSchemeRepository : ISchemeRepository
 {
     private int _nextId;
 
-    public Task<IReadOnlyList<Scheme>> ListAsync(IReadOnlyList<SchemeStatus>? statuses, string sortBy, string sortDir, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<Scheme>>([]);
+    public IReadOnlyList<SchemeStatus>? LastStatuses { get; private set; }
+
+    public string? LastSortBy { get; private set; }
+
+    public string? LastSortDir { get; private set; }
+
+    public Task<IReadOnlyList<Scheme>> ListAsync(IReadOnlyList<SchemeStatus>? statuses, string sortBy, string sortDir, CancellationToken cancellationToken = default)
+    {
+        LastStatuses = statuses;
+        LastSortBy = sortBy;
+        LastSortDir = sortDir;
+        return Task.FromResult<IReadOnlyList<Scheme>>([]);
+    }
 
     public Task<Scheme?> GetByIdAsync(string id, CancellationToken cancellationToken = default) =>
         Task.FromResult<Scheme?>(null);
@@ -23,6 +34,9 @@ public class FakeSchemeRepository : ISchemeRepository
     public Task<Scheme?> UpdateAsync(Scheme scheme, int expectedVersion, CancellationToken cancellationToken = default) =>
         Task.FromResult<Scheme?>(null);
 
-    public Task<IReadOnlyList<SchemeStatusTotals>> GetStatusTotalsAsync(IReadOnlyList<SchemeStatus>? statuses, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<SchemeStatusTotals>>([]);
+    public Task<IReadOnlyList<SchemeStatusTotals>> GetStatusTotalsAsync(IReadOnlyList<SchemeStatus>? statuses, CancellationToken cancellationToken = default)
+    {
+        LastStatuses = statuses;
+        return Task.FromResult<IReadOnlyList<SchemeStatusTotals>>([]);
+    }
 }

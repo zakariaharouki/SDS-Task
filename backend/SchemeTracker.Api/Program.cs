@@ -14,7 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers(options => options.Filters.Add<ValidationExceptionFilter>())
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ValidationExceptionFilter>();
+        options.ModelBinderProviders.Insert(0, new SchemeStatusModelBinderProvider());
+    })
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)
     .ConfigureApiBehaviorOptions(options =>
@@ -25,6 +29,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
+builder.Services.AddSingleton<IValidator<SchemeListQuery>, SchemeListQueryValidator>();
 
 // MongoDB: fail at startup if the connection settings are missing.
 builder.Services.AddOptions<MongoOptions>()

@@ -73,6 +73,13 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Changed/rejected: Claude's first version used an API removed from FluentValidation 12 (see Rejected / corrected output). I accepted two behaviours it flagged: an invalid body on an unknown id returns 400 rather than 404, and negative homes can show two errors.
 - Verified by: 100 tests passed. Removing each behaviour made tests fail (9, 9 and 2). Zakaria approved. Commit 51242ed.
 
+### 2026-11-04 — Step 3: query parameters (Claude Code)
+- Goal: reject invalid `status`, `sortBy` and `sortDir` values, and make "no filter" mean the same for the list and the summary.
+- Prompt: "Yes as you suggested", my answer on making the query `status` as strict as the body.
+- Kept: a strict status binder, sharing one exact-match check with the JSON converter, sort rules validated in the service, and "no filter" always reaching the repository as `null`.
+- Changed/rejected: nothing. Claude flagged that unknown query parameters are ignored and parameter names aren't case-sensitive, and I kept that as it recommended.
+- Verified by: 140 tests passed. Removing each behaviour made tests fail (16, 9, 1 and 2). Zakaria approved.
+
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
 - Final: "Yes I meant repository layer by creating DTOs, Mapping, Controllers (Empty I will fill in the logic later), Services and Interfaces. I also want you to add all Services to program.cs as usual."
@@ -105,8 +112,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | Formulas were private in `SchemeService`, so they couldn't be unit tested directly | Fixed | Moved to `SchemeCalculator`, as design section 2.5 planned |
 | Banker's rounding gave 0.2 for 0.25% | Fixed | I chose midpoints away from zero, the result most people expect |
 | Total value example in design.md was wrong | Fixed | Corrected to £36,800,000 |
-| Invalid `sortBy` and `sortDir` were accepted, and query `status` accepted `planning` and `1` | Open (step 3) | Design section 4.1 requires 400 |
-| Summary passes an empty array with no filter, while the list passes `null` | Open (step 3) | An empty Mongo `$in` filter could make the summary show zeros |
+| Invalid `sortBy` and `sortDir` were accepted, and query `status` accepted `planning` and `1` | Fixed (step 3) | Design section 4.1 requires 400 |
+| Summary passed an empty array with no filter, while the list passed `null` | Fixed (step 3) | An empty Mongo `$in` filter could have made the summary show zeros |
 | `duplicateKey` is never set | Open (step 4) | Once the unique index exists, the second scheme saved would be rejected |
 | A stale version returns 404 instead of 409 | Open (step 5) | Design section 5.4 requires 409 |
 | Duplicate schemes have no 409 | Open (step 5) | Design section 3 requires 409 |

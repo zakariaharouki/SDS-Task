@@ -268,7 +268,8 @@ Query parameters:
 | `sortBy`  | `status`, `name`, `totalHomes`, `totalValue`, `updatedAt` | `status` |
 | `sortDir` | `asc`, `desc`                                             | `asc`    |
 
-- Invalid `status` / `sortBy` / `sortDir` → 400 (not silently ignored).
+- Invalid `status` / `sortBy` / `sortDir` → 400 (not silently ignored). Values are
+  exact and case-sensitive, so `?status=planning` and `?status=1` are rejected.
 - **Stable sort:** every sort has tie-breakers `name asc`, then `_id`, so rows with
   equal values don't jump around between requests.
 - Each list item includes the computed figures, so the list can show them without

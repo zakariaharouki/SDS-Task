@@ -23,7 +23,7 @@ public class SchemeRequestValidator : AbstractValidator<ISchemeRequest>
             .Must(address => address.Trim().Length <= MaxAddressLength).WithMessage($"Site address must be {MaxAddressLength} characters or fewer.");
 
         RuleFor(request => request.Status)
-            .IsInEnum().WithMessage("Status must be one of: Appraisal, Planning, OnSite, Complete.");
+            .IsInEnum().WithMessage(InvalidRequestResponse.InvalidStatusMessage);
 
         var lineValidator = new TenureLineValidator();
         RuleFor(request => request.TenureMix.SocialRent).SetValidator(lineValidator);

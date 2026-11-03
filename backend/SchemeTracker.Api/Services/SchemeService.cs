@@ -13,23 +13,33 @@ public class SchemeService : ISchemeService
     private readonly ISchemeRepository _repository;
     private readonly TimeProvider _timeProvider;
     private readonly IValidator<ISchemeRequest> _validator;
+    private readonly IValidator<SchemeListQuery> _queryValidator;
 
 
     public SchemeService(
         ISchemeRepository repository,
         TimeProvider timeProvider,
-        IValidator<ISchemeRequest> validator)
+        IValidator<ISchemeRequest> validator,
+        IValidator<SchemeListQuery> queryValidator)
     {
         _repository = repository;
         _timeProvider = timeProvider;
         _validator = validator;
+        _queryValidator = queryValidator;
     }
+
+    // "No filter" reaches the repository as null, however the caller expressed it.
+    private static IReadOnlyList<SchemeStatus>? NoFilterAsNull(IReadOnlyList<SchemeStatus>? statuses) =>
+        statuses is { Count: > 0 } ? statuses : null;
+
     public async Task<IReadOnlyList<SchemeResponse>> ListAsync(
         SchemeListQuery query,
         CancellationToken cancellationToken = default)
     {
+        await _queryValidator.ValidateAndThrowAsync(query, cancellationToken);
+
         var schemes = await _repository.ListAsync(
-            query.Status,
+            NoFilterAsNull(query.Status),
             query.SortBy,
             query.SortDir,
             cancellationToken);
@@ -155,7 +165,7 @@ public class SchemeService : ISchemeService
     CancellationToken cancellationToken = default)
     {
         var statusTotals = await _repository.GetStatusTotalsAsync(
-            statuses,
+            NoFilterAsNull(statuses),
             cancellationToken);
 
         int schemeCount = 0;

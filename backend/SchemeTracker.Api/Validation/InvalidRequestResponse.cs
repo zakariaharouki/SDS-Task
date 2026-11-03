@@ -11,6 +11,8 @@ namespace SchemeTracker.Api.Validation;
 /// </summary>
 public static partial class InvalidRequestResponse
 {
+    public const string InvalidStatusMessage = "Status must be one of: Appraisal, Planning, OnSite, Complete.";
+
     private const string BodyField = "body";
 
     private static readonly Dictionary<string, string> Labels = new()
@@ -25,7 +27,9 @@ public static partial class InvalidRequestResponse
         ["marketSale"] = "Market sale",
         ["homes"] = "Homes",
         ["averageValue"] = "Average value",
-        ["version"] = "Version"
+        ["version"] = "Version",
+        ["sortBy"] = "Sort by",
+        ["sortDir"] = "Sort direction"
     };
 
     public static IActionResult Create(ActionContext context)
@@ -78,10 +82,18 @@ public static partial class InvalidRequestResponse
     private static void AddBindingError(ModelStateDictionary errors, string key, string message)
     {
         var path = ToFieldPath(key);
-
-        errors.AddModelError(path, message.EndsWith("field is required.")
+        var friendlyMessage = message.EndsWith("field is required.")
             ? $"{Label(LastSegment(path))} is required."
-            : message);
+            : message;
+
+        // Each bad value in a repeated query parameter reports the same message.
+        var alreadyReported = errors.TryGetValue(path, out var entry)
+            && entry.Errors.Any(error => error.ErrorMessage == friendlyMessage);
+
+        if (!alreadyReported)
+        {
+            errors.AddModelError(path, friendlyMessage);
+        }
     }
 
     private static void AddJsonError(ModelStateDictionary errors, string path, string message)
@@ -117,7 +129,7 @@ public static partial class InvalidRequestResponse
     {
         "homes" or "version" => $"{Label(field)} must be a whole number.",
         "averageValue" => $"{Label(field)} must be a number.",
-        "status" => "Status must be one of: Appraisal, Planning, OnSite, Complete.",
+        "status" => InvalidStatusMessage,
         "name" or "siteAddress" => $"{Label(field)} must be text.",
         "tenureMix" or "socialRent" or "affordableRent" or "sharedOwnership" or "marketSale" =>
             $"{Label(field)} must be an object.",

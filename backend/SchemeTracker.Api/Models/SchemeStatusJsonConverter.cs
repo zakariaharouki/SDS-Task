@@ -11,17 +11,10 @@ public sealed class SchemeStatusJsonConverter : JsonConverter<SchemeStatus>
 {
     public override SchemeStatus Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.String)
+        if (reader.TokenType == JsonTokenType.String
+            && SchemeStatusNames.TryParseExact(reader.GetString(), out var status))
         {
-            var value = reader.GetString();
-
-            foreach (var status in Enum.GetValues<SchemeStatus>())
-            {
-                if (status.ToString() == value)
-                {
-                    return status;
-                }
-            }
+            return status;
         }
 
         throw new JsonException();
