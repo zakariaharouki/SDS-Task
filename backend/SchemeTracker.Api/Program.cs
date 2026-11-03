@@ -1,3 +1,11 @@
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+using SchemeTracker.Api.Interfaces;
+using SchemeTracker.Api.Models;
+using SchemeTracker.Api.Options;
+using SchemeTracker.Api.Repositories;
+using SchemeTracker.Api.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +14,28 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton(TimeProvider.System);
+
+// MongoDB: fail at startup if the connection settings are missing.
+builder.Services.AddOptions<MongoOptions>()
+    .Bind(builder.Configuration.GetSection(MongoOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<IMongoClient>(services =>
+    new MongoClient(services.GetRequiredService<IOptions<MongoOptions>>().Value.ConnectionString));
+
+builder.Services.AddSingleton<IMongoCollection<Scheme>>(services =>
+{
+    var options = services.GetRequiredService<IOptions<MongoOptions>>().Value;
+    return services.GetRequiredService<IMongoClient>()
+        .GetDatabase(options.Database)
+        .GetCollection<Scheme>("schemes");
+});
+
+builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
+builder.Services.AddScoped<ISchemeService, SchemeService>();
 
 var app = builder.Build();
 
@@ -23,3 +53,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Lets the test project host the API with WebApplicationFactory<Program>.
+public partial class Program;
