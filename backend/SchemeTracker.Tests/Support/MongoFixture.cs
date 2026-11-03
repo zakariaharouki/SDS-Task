@@ -37,7 +37,9 @@ public sealed class MongoFixture : IAsyncLifetime
             return;
         }
 
-        _container = new MongoDbBuilder("mongo:8.0").Build();
+        // Not 8.0 or newer: those refuse to start on Linux kernels 6.19 to 7.0.13, which CI runners
+        // currently use (SERVER-121912, SERVER-125742). Move up once runners reach 7.0.14.
+        _container = new MongoDbBuilder("mongo:7.0").Build();
         await _container.StartAsync();
         _client = new MongoClient(_container.GetConnectionString());
     }
