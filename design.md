@@ -80,7 +80,8 @@ tenure types are rare and come with policy change anyway.
 
 - Stored as a string in Mongo (`"OnSite"`), not a number, so the data is readable
   and reordering the enum can't corrupt it.
-- Serialized as the same string in JSON (`JsonStringEnumConverter`).
+- Serialized as the same string in JSON (`SchemeStatusJsonConverter`). It accepts only
+  the exact name; the built-in converter also accepts numbers and ignores case.
 - Sorting by status uses **pipeline order**, not alphabetical (alphabetical would
   put Complete before Planning). Implemented in the Mongo query with
   `$indexOfArray(["Appraisal","Planning","OnSite","Complete"], "$status")`.
@@ -174,7 +175,7 @@ feedback, but never relies on them.
 | Total homes vs `status`    | **Total homes must be ≥ 1 when status is `Planning`, `OnSite` or `Complete`.** 0 total homes is only allowed at `Appraisal` |
 | `name` + `siteAddress`     | **Must not match another scheme** (see duplicate rule below). 409 if it does |
 | `version` (PUT only)       | Required; must match the stored version (see 5.4)                    |
-| `id`, `createdAt`, `updatedAt`, totals | Ignored if sent by the client; always set by the server  |
+| `id`, `createdAt`, `updatedAt`, totals | Rejected with a 400 if sent by the client; always set by the server |
 
 Extra decisions:
 
