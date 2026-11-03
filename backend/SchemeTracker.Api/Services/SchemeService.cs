@@ -20,19 +20,6 @@ public class SchemeService : ISchemeService
         _repository = repository;
         _timeProvider = timeProvider;
     }
-    private static decimal? CalculateAffordablePercent(
-        int affordableHomes,
-        int totalHomes)
-    {
-        if (totalHomes == 0)
-        {
-            return null;
-        }
-
-        decimal percentage = (decimal)affordableHomes / totalHomes * 100;
-
-        return Math.Round(percentage, 1);
-    }
     public async Task<IReadOnlyList<SchemeResponse>> ListAsync(
         SchemeListQuery query,
         CancellationToken cancellationToken = default)
@@ -47,7 +34,7 @@ public class SchemeService : ISchemeService
 
         foreach (var scheme in schemes)
         {
-            decimal? percentage = CalculateAffordablePercent(
+            decimal? percentage = SchemeCalculator.CalculateAffordablePercent(
                 scheme.Totals.AffordableHomes,
                 scheme.Totals.TotalHomes);
 
@@ -71,35 +58,11 @@ public class SchemeService : ISchemeService
             return null;
         }
 
-        decimal? percentage = CalculateAffordablePercent(
+        decimal? percentage = SchemeCalculator.CalculateAffordablePercent(
             scheme.Totals.AffordableHomes,
             scheme.Totals.TotalHomes);
 
         return scheme.ToResponse(percentage);
-    }
-
-    private static SchemeTotals CalculateTotals(TenureMix mix)
-    {
-        var totals = new SchemeTotals();
-
-        totals.TotalHomes =
-            mix.SocialRent.Homes +
-            mix.AffordableRent.Homes +
-            mix.SharedOwnership.Homes +
-            mix.MarketSale.Homes;
-
-        totals.AffordableHomes =
-            mix.SocialRent.Homes +
-            mix.AffordableRent.Homes +
-            mix.SharedOwnership.Homes;
-
-        totals.TotalValue =
-            mix.SocialRent.Homes * mix.SocialRent.AverageValue +
-            mix.AffordableRent.Homes * mix.AffordableRent.AverageValue +
-            mix.SharedOwnership.Homes * mix.SharedOwnership.AverageValue +
-            mix.MarketSale.Homes * mix.MarketSale.AverageValue;
-
-        return totals;
     }
 
     public async Task<SchemeResponse> CreateAsync(
@@ -114,7 +77,7 @@ public class SchemeService : ISchemeService
         scheme.SiteAddress = scheme.SiteAddress.Trim();
 
         // Calculate the figures on the server.
-        scheme.Totals = CalculateTotals(scheme.TenureMix);
+        scheme.Totals = SchemeCalculator.CalculateTotals(scheme.TenureMix);
 
         // Set the initial version and timestamps.
         var now = _timeProvider.GetUtcNow().UtcDateTime;
@@ -129,7 +92,7 @@ public class SchemeService : ISchemeService
             cancellationToken);
 
         // Calculate the percentage for the response.
-        decimal? percentage = CalculateAffordablePercent(
+        decimal? percentage = SchemeCalculator.CalculateAffordablePercent(
             created.Totals.AffordableHomes,
             created.Totals.TotalHomes);
 
@@ -157,7 +120,7 @@ public class SchemeService : ISchemeService
         scheme.SiteAddress = scheme.SiteAddress.Trim();
 
         // Recalculate because the tenure mix may have changed.
-        scheme.Totals = CalculateTotals(scheme.TenureMix);
+        scheme.Totals = SchemeCalculator.CalculateTotals(scheme.TenureMix);
 
         // Keep CreatedAt unchanged.
         scheme.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
@@ -173,7 +136,7 @@ public class SchemeService : ISchemeService
             return null;
         }
 
-        decimal? percentage = CalculateAffordablePercent(
+        decimal? percentage = SchemeCalculator.CalculateAffordablePercent(
             updated.Totals.AffordableHomes,
             updated.Totals.TotalHomes);
 
@@ -221,7 +184,7 @@ public class SchemeService : ISchemeService
             affordableHomes += totals.AffordableHomes;
             totalValue += totals.TotalValue;
 
-            decimal? percentage = CalculateAffordablePercent(
+            decimal? percentage = SchemeCalculator.CalculateAffordablePercent(
                 totals.AffordableHomes,
                 totals.TotalHomes);
 
@@ -234,7 +197,7 @@ public class SchemeService : ISchemeService
             TotalHomes = totalHomes,
             AffordableHomes = affordableHomes,
             TotalValue = totalValue,
-            AffordablePercent = CalculateAffordablePercent(
+            AffordablePercent = SchemeCalculator.CalculateAffordablePercent(
                 affordableHomes,
                 totalHomes),
             ByStatus = byStatus

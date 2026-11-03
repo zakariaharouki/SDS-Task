@@ -98,7 +98,7 @@ easiest thing to unit test:
 |----------------------|----------------------------------------------------------------|
 | `totalHomes`         | sum of `homes` across all 4 tenures                            |
 | `affordableHomes`    | `socialRent + affordableRent + sharedOwnership` homes          |
-| `affordablePercent`  | `affordableHomes / totalHomes × 100`, rounded to 1 dp; **`null` when `totalHomes = 0`** (UI shows "n/a") |
+| `affordablePercent`  | `affordableHomes / totalHomes × 100`, rounded to 1 dp with midpoints away from zero (0.25 → 0.3); **`null` when `totalHomes = 0`** (UI shows "n/a") |
 | `totalValue`         | sum of `homes × averageValue` across all 4 tenures             |
 
 - **Affordable = social rent + affordable rent + shared ownership**, exactly as the
@@ -133,7 +133,7 @@ the API is the only writer, and `SchemeService` always recalculates before savin
   "siteAddress": "Unit 4, Riverside Road, Leeds LS1 4AB",
   "status": "Planning",
   "tenureMix": { ... as above ... },
-  "totals": { "totalHomes": 150, "affordableHomes": 90, "totalValue": Decimal128("37400000.00") },
+  "totals": { "totalHomes": 150, "affordableHomes": 90, "totalValue": Decimal128("36800000.00") },
   "duplicateKey": "riverside phase 2|unit 4, riverside road, leeds ls1 4ab",
   "version": 3,
   "createdAt": ISODate("2026-11-02T10:00:00Z"),
@@ -288,7 +288,7 @@ Response item:
   "totalHomes": 150,
   "affordableHomes": 90,
   "affordablePercent": 60.0,
-  "totalValue": 37400000.00,
+  "totalValue": 36800000.00,
   "version": 3,
   "createdAt": "2026-11-02T10:00:00Z",
   "updatedAt": "2026-11-03T09:12:00Z"
@@ -371,7 +371,8 @@ backend/
   Dockerfile
 ```
 
-`SchemeCalculator`, the validators and the `Dockerfile` are planned but not added yet.
+`SchemeCalculator` is in `Services/`. The validators and the `Dockerfile` are planned
+but not added yet.
 
 ### 5.1 Layers
 
