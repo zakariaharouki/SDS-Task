@@ -92,6 +92,8 @@ public class SchemeService : ISchemeService
         scheme.Name = scheme.Name.Trim();
         scheme.SiteAddress = scheme.SiteAddress.Trim();
 
+        scheme.DuplicateKey = SchemeDuplicateKey.Create(scheme.Name, scheme.SiteAddress);
+
         // Calculate the figures on the server.
         scheme.Totals = SchemeCalculator.CalculateTotals(scheme.TenureMix);
 
@@ -136,6 +138,8 @@ public class SchemeService : ISchemeService
 
         scheme.Name = scheme.Name.Trim();
         scheme.SiteAddress = scheme.SiteAddress.Trim();
+
+        scheme.DuplicateKey = SchemeDuplicateKey.Create(scheme.Name, scheme.SiteAddress);
 
         // Recalculate because the tenure mix may have changed.
         scheme.Totals = SchemeCalculator.CalculateTotals(scheme.TenureMix);

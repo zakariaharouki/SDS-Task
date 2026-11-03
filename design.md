@@ -204,6 +204,10 @@ Extra decisions:
     "check, then insert" in code has a race (two saves at once both pass the check);
     the unique index can't be beaten. The repository catches Mongo's duplicate key
     error (code 11000) and turns it into a 409.
+  - Known limit: a `|` in a name or address can make two different schemes share a
+    key (`A|B` at `C` and `A` at `B|C`), which gives a false 409. Accepted: it needs a
+    `|` and otherwise identical wording, and rewording gets past it. Escaping isn't
+    worth the extra code for such a rare case.
   - On PUT, the scheme can keep its own name and address; the index only clashes
     with *other* documents.
   - Response: **409 Conflict** Problem Details with field errors on `name` and
@@ -374,7 +378,8 @@ backend/
   Dockerfile
 ```
 
-`SchemeCalculator` is in `Services/`. The `Dockerfile` is planned but not added yet.
+`SchemeCalculator` and `SchemeDuplicateKey` are in `Services/`. The `Dockerfile` is
+planned but not added yet.
 
 ### 5.1 Layers
 
