@@ -19,6 +19,9 @@ public class SchemeApiFactory : WebApplicationFactory<Program>
         }));
 
         builder.ConfigureTestServices(services =>
-            services.AddSingleton<ISchemeRepository, FakeSchemeRepository>());
+        {
+            services.RemoveIndexInitializer();
+            services.AddSingleton<ISchemeRepository, FakeSchemeRepository>();
+        });
     }
 }

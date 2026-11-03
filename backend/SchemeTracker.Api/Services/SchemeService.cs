@@ -181,15 +181,7 @@ public class SchemeService : ISchemeService
 
         var byStatus = new List<SchemeStatusSummaryResponse>();
 
-        SchemeStatus[] allStatuses =
-        [
-            SchemeStatus.Appraisal,
-        SchemeStatus.Planning,
-        SchemeStatus.OnSite,
-        SchemeStatus.Complete
-        ];
-
-        foreach (var status in allStatuses)
+        foreach (var status in SchemeStatusNames.PipelineOrder)
         {
             var totals = statusTotals.FirstOrDefault(
                 item => item.Status == status);

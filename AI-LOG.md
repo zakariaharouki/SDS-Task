@@ -92,7 +92,14 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Prompt: "I want you to write the missing logic and validators while I validate each step"
 - Kept: the repository reports duplicates and the service reports stale versions, with one filter producing both 409s, each with its own title.
 - Changed/rejected: nothing. I accepted that the stale version check assumes nothing gets deleted, which holds because delete is out of scope.
-- Verified by: 172 tests passed using a fake repository. Removing each behaviour made tests fail (5, 2, 4 and 3). The real Mongo duplicate error is handled in step 6. Zakaria approved.
+- Verified by: 172 tests passed using a fake repository. Removing each behaviour made tests fail (5, 2, 4 and 3). The real Mongo duplicate error is handled in step 6. Zakaria approved. Commit f693fdb.
+
+### 2026-11-04 — Step 6: repository (Claude Code)
+- Goal: implement the MongoDB repository and indexes, and test them against real MongoDB in CI.
+- Prompt: "rely on CI because docker will need sometime to be installed in my environment" and "pushing 6 is ok"
+- Kept: pipeline-order status sorting with stable tie-breakers, atomic version checks, translating Mongo's duplicate error, and one status order list shared with the summary.
+- Changed/rejected: nothing yet.
+- Verified by: CI run to be recorded. Awaiting my approval.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -132,8 +139,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | A `\|` in a name or address can create a false duplicate key | Disagreed | Too rare to justify escaping, so it's documented as a known limit in design section 3 |
 | A stale version returned 404 instead of 409 | Fixed (step 5) | Design section 5.4 requires 409 |
 | Duplicate schemes had no 409 | Fixed (step 5), real Mongo error handled in step 6 | Design section 3 requires 409 |
-| Repository methods are not implemented, and indexes don't exist | Open (step 6) | Every real request that reaches the repository fails with a 500 |
-| Malformed ids must return 404 | Open (step 6) | Design section 4.2 |
+| Repository methods were not implemented, and indexes didn't exist | Fixed (step 6) | Every real request that reached the repository failed with a 500 |
+| Malformed ids must return 404 | Fixed (step 6) | Design section 4.2 |
 | Not every endpoint has a test yet | Open (step 7) | My CLAUDE.md rule requires at least one test per endpoint |
 | Duplicate `using` in `SchemeService` and unused `using` in `SchemesController` | Open | Small cleanups I haven't decided on |
 | `/health`, CORS, `Dockerfile`, `$PORT`, Swagger outside Development, stock frontend page | Open (after step 7) | Needed before deploying to Render and Vercel |

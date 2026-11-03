@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,7 @@ using SchemeTracker.Api.Interfaces;
 using SchemeTracker.Api.Models;
 using SchemeTracker.Api.Repositories;
 using SchemeTracker.Api.Services;
+using SchemeTracker.Tests.Support;
 
 namespace SchemeTracker.Tests;
 
@@ -16,11 +18,14 @@ public class ServiceRegistrationTests
     // Settings are pinned here so these tests can never pick up a real connection string.
     private static WebApplicationFactory<Program> CreateFactory(string connectionString, string database) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(host =>
+        {
             host.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Mongo:ConnectionString"] = connectionString,
                 ["Mongo:Database"] = database
-            })));
+            }));
+            host.ConfigureTestServices(services => services.RemoveIndexInitializer());
+        });
 
     [Fact]
     public void All_layers_resolve_from_the_container()

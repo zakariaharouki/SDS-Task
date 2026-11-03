@@ -13,6 +13,15 @@ public enum SchemeStatus
 
 public static class SchemeStatusNames
 {
+    /// <summary>The order schemes move through. Used for sorting and for the summary rows.</summary>
+    public static readonly IReadOnlyList<SchemeStatus> PipelineOrder =
+    [
+        SchemeStatus.Appraisal,
+        SchemeStatus.Planning,
+        SchemeStatus.OnSite,
+        SchemeStatus.Complete
+    ];
+
     /// <summary>Matches only the exact status name, unlike Enum.Parse, which also accepts numbers.</summary>
     public static bool TryParseExact(string? value, out SchemeStatus result)
     {

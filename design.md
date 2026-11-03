@@ -563,7 +563,9 @@ CI (see 5.2). Badge in README.
 - **Atlas network access is `0.0.0.0/0`.** Reason: Render's free tier has no static
   outbound IPs. Trade-off: security relies on the strong DB password + TLS only.
   With a paid tier, I'd restrict to Render's static IPs.
-- Indexes created at startup (idempotent `CreateMany`).
+- Indexes created at startup (idempotent `CreateMany`). If that fails, the API stops,
+  because the unique index is what blocks duplicates. So the API needs a reachable
+  MongoDB to start, including in local development.
 - A seed script / endpoint-free seed (`dotnet run -- seed`) with ~8 realistic schemes
   across all statuses, so reviewers don't open an empty app. Not exposed over HTTP.
 

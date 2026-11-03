@@ -50,6 +50,8 @@ builder.Services.AddSingleton<IMongoCollection<Scheme>>(services =>
         .GetCollection<Scheme>("schemes");
 });
 
+builder.Services.AddHostedService<SchemeIndexInitializer>();
+
 builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
 builder.Services.AddScoped<ISchemeService, SchemeService>();
 
