@@ -9,8 +9,11 @@ permissions:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    # Pinned because MongoDB 8.0 refuses to start on Linux kernels 6.19 to 7.0.13
+    # (SERVER-121912, SERVER-125742), which breaks the Testcontainers tests.
+    runs-on: ubuntu-24.04
     steps:
+      - run: uname -r
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
