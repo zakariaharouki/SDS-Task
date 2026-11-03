@@ -122,7 +122,7 @@ Reason: sorting by `totalHomes` / `totalValue` and building the summary then bec
 plain indexed Mongo queries, and the formula lives only in C# (one source of truth),
 not duplicated into an aggregation pipeline.
 Trade-off: the stored totals could drift if someone edits Mongo by hand. Mitigation:
-the API is the only writer, and the repository always recalculates before saving.
+the API is the only writer, and `SchemeService` always recalculates before saving.
 
 ### 2.6 Mongo document (stored shape)
 
@@ -210,7 +210,7 @@ Extra decisions:
     409 rather than 400 because the input is valid on its own; it conflicts with
     existing data.
   - Trade-off: the duplicate key duplicates name/address data in the document.
-    Fine: it's written only by the repository.
+    Fine: it's set only by `SchemeService`.
 - **Missing tenure is an error, not 0.** Reason: silent defaults hide client bugs.
 - **Unknown JSON properties are rejected** (`JsonUnmappedMemberHandling.Disallow`),
   so a typo like `affordbleRent` fails loudly instead of being dropped.
@@ -354,34 +354,59 @@ Response item:
 ## 5. Backend structure
 
 ```
-api/
-  src/
-    Schemes.Api/              Controllers, DTOs, Program.cs, error handling, CORS
-    Schemes.Domain/           Scheme, TenureMix, TenureLine, SchemeStatus,
-                              SchemeCalculator, validators. No Mongo, no ASP.NET
-    Schemes.Infrastructure/   Mongo documents, mapping, SchemeRepository, indexes
-  tests/
-    Schemes.Domain.Tests/     Calculator + validator unit tests
-    Schemes.Api.Tests/        HTTP-level integration tests (WebApplicationFactory + Testcontainers)
+backend/
+  SchemeTracker.sln
+  SchemeTracker.Api/
+    Controllers/    HTTP only: routes, status codes
+    Dtos/           Request and response shapes (the API contract)
+    Interfaces/     ISchemeService, ISchemeRepository
+    Mapping/        DTO ↔ model copying, no business rules
+    Models/         Scheme, TenureMix, TenureLine, SchemeTotals, SchemeStatus,
+                    SchemeStatusTotals, with MongoDB mapping attributes
+    Options/        MongoOptions
+    Repositories/   SchemeRepository
+    Services/       SchemeService
+    Program.cs      Service registration, pipeline
+  SchemeTracker.Tests/   Unit and integration tests, one project
   Dockerfile
 ```
 
+`SchemeCalculator`, the validators and the `Dockerfile` are planned but not added yet.
+
 ### 5.1 Layers
 
-- **Domain** holds the rules that matter (calculation, validation, status order) and
-  has no dependencies, so it is fast to test and easy to explain.
-- **Infrastructure** is the only code that knows about MongoDB.
-- **Api** is thin: bind → validate → call repository → map to DTO.
-- No separate "service" layer or MediatR. Reason: with one entity and five
-  endpoints, extra layers would be ceremony. Trade-off: if business logic grows
-  (e.g. approvals), a service layer would be the first thing added.
+Requests flow **Controller → Service → Repository → MongoDB**, in one API project.
+Each layer depends on the next through an interface.
+
+- **Controllers** are thin: HTTP only, no business rules.
+- **Services** hold the application flow: validate → apply rules → call repository →
+  map to DTO. `SchemeService` recalculates `totals` and `duplicateKey` before every
+  save. Trade-off: every code path that saves a scheme must go through the service,
+  because the repository stores what it is given.
+- **Repositories** are the only code that queries MongoDB.
+- **Mapping** only copies data. It takes the affordable percentage as an input, so
+  the formula stays in `SchemeCalculator`.
+- `SchemeCalculator` stays pure, with no I/O, so it remains the easiest thing to test.
+
+Reason: clear separation of responsibilities, and each layer can be tested on its own.
+Trade-off: more classes than one entity and five endpoints strictly need, and because
+models carry MongoDB attributes, they are not free of the database driver.
 
 ### 5.2 Configuration and secrets
 
 - `Mongo__ConnectionString`, `Mongo__Database`, `Cors__AllowedOrigins` from
   environment variables (Render dashboard). Never committed.
-- `appsettings.Development.json` points at a local Docker Mongo.
+- The API refuses to start if the Mongo settings are missing, so a bad deploy fails
+  immediately rather than on the first request.
+- `appsettings.Development.json` points at a local Docker Mongo and has no credentials.
+- `.env` holds local values. It is ignored by git, and a pre-push hook
+  (`.githooks/pre-push`) blocks any push whose commits contain it, including after
+  `git add -f`. Each clone enables the hook once with
+  `git config core.hooksPath .githooks`.
+  Trade-off: `git push --no-verify` can still bypass a local hook.
 - `.env.example` documents every variable with no real values.
+- **CI receives no database credentials.** Tests pin their own settings or use
+  Testcontainers, so they can never reach a real database.
 
 ### 5.3 CORS
 
@@ -411,7 +436,7 @@ other (last write wins). Cheap to add, and a good "what would break" answer.
 ## 6. Frontend
 
 ```
-web/
+frontend/
   src/
     api/          Typed client (fetch wrapper), DTO types, error parsing
     features/schemes/
@@ -454,7 +479,7 @@ web/
 
 Focus on the logic that matters, as the brief asks.
 
-### 7.1 Domain unit tests (xUnit), highest value
+### 7.1 Unit tests (xUnit), highest value
 
 `SchemeCalculator`:
 - totals for a normal mix
@@ -513,7 +538,8 @@ Real Mongo in Docker, so `Decimal128` mapping, collation and sorting are actuall
 ### 7.4 CI
 
 GitHub Actions: build + test API (Docker available for Testcontainers) and build +
-test web on every push. Badge in README.
+test frontend on every push. No database credentials or other secrets are passed to
+CI (see 5.2). Badge in README.
 
 ---
 
@@ -556,7 +582,7 @@ test web on every push. Badge in README.
 The README must cover:
 
 - What it is, who it is for, where to start
-- How to run (local Mongo via `docker compose`, API, web) and how to run tests
+- How to run (local Mongo via `docker compose`, API, frontend) and how to run tests
 - Data design and validation rules (summary of sections 2 and 3)
 - Decisions and trade-offs, including what was left out (section 9)
 - What I'd do next with more time
@@ -589,3 +615,5 @@ The README must cover:
 | 12 | Filter/sort in URL | Reload/share/back button work | — |
 | 13 | No auth, delete or pagination | Keep it small and finished | Listed in section 9 |
 | 14 | Testcontainers for API tests | Tests real Mongo behaviour (Decimal128, collation) | Needs Docker to run tests |
+| 15 | One API project with controller, service and repository layers (replaces separate Domain and Infrastructure projects, and "no service layer") | Clear responsibilities behind interfaces, in a simple layout | More classes than strictly needed; models carry MongoDB attributes |
+| 16 | No database credentials in CI; `.env` ignored and blocked by a pre-push hook | Credentials can't leak through test runs or a forced add | Hook is per clone and can be bypassed with `--no-verify` |

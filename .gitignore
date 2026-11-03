@@ -1,0 +1,29 @@
+# Secrets: never commit. Matches at any depth, including frontend/.env and .env.production.
+.env
+.env.*
+!.env.example
+
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+coverage*.xml
+coverage*.json
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.log
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
