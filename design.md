@@ -367,13 +367,13 @@ backend/
     Options/        MongoOptions
     Repositories/   SchemeRepository
     Services/       SchemeService
+    Validation/     Validators, request error responses
     Program.cs      Service registration, pipeline
   SchemeTracker.Tests/   Unit and integration tests, one project
   Dockerfile
 ```
 
-`SchemeCalculator` is in `Services/`. The validators and the `Dockerfile` are planned
-but not added yet.
+`SchemeCalculator` is in `Services/`. The `Dockerfile` is planned but not added yet.
 
 ### 5.1 Layers
 

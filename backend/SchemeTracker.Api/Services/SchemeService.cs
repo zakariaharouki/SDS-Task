@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FluentValidation;
 using SchemeTracker.Api.Dtos;
 using SchemeTracker.Api.Interfaces;
 using SchemeTracker.Api.Mapping;
@@ -11,14 +12,17 @@ public class SchemeService : ISchemeService
 {
     private readonly ISchemeRepository _repository;
     private readonly TimeProvider _timeProvider;
+    private readonly IValidator<ISchemeRequest> _validator;
 
 
     public SchemeService(
         ISchemeRepository repository,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IValidator<ISchemeRequest> validator)
     {
         _repository = repository;
         _timeProvider = timeProvider;
+        _validator = validator;
     }
     public async Task<IReadOnlyList<SchemeResponse>> ListAsync(
         SchemeListQuery query,
@@ -69,6 +73,8 @@ public class SchemeService : ISchemeService
     CreateSchemeRequest request,
     CancellationToken cancellationToken = default)
     {
+        await _validator.ValidateAndThrowAsync(request, cancellationToken);
+
         // Convert the request into a database model.
         var scheme = request.ToModel();
 
@@ -103,6 +109,8 @@ public class SchemeService : ISchemeService
     UpdateSchemeRequest request,
     CancellationToken cancellationToken = default)
     {
+        await _validator.ValidateAndThrowAsync(request, cancellationToken);
+
         // Find the existing scheme.
         var scheme = await _repository.GetByIdAsync(
             id,

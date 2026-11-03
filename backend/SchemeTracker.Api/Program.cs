@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using SchemeTracker.Api.Dtos;
 using SchemeTracker.Api.Interfaces;
 using SchemeTracker.Api.Models;
 using SchemeTracker.Api.Options;
@@ -12,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options => options.Filters.Add<ValidationExceptionFilter>())
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)
     .ConfigureApiBehaviorOptions(options =>
@@ -22,6 +24,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
 
 // MongoDB: fail at startup if the connection settings are missing.
 builder.Services.AddOptions<MongoOptions>()

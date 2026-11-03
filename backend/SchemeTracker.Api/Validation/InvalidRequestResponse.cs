@@ -43,6 +43,11 @@ public static partial class InvalidRequestResponse
             }
         }
 
+        return FromErrors(context, errors);
+    }
+
+    public static BadRequestObjectResult FromErrors(ActionContext context, ModelStateDictionary errors)
+    {
         var problem = context.HttpContext.RequestServices
             .GetRequiredService<ProblemDetailsFactory>()
             .CreateValidationProblemDetails(context.HttpContext, errors);
@@ -124,7 +129,7 @@ public static partial class InvalidRequestResponse
         message.EndsWith("field is required.")
         && context.ActionDescriptor.Parameters.Any(parameter => parameter.Name == key);
 
-    private static string ToFieldPath(string key)
+    public static string ToFieldPath(string key)
     {
         var segments = key.TrimStart('$').TrimStart('.').Split('.', StringSplitOptions.RemoveEmptyEntries);
 
