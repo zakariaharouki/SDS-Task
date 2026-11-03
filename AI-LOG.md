@@ -85,7 +85,14 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Prompt: "Concerning the duplicatekey also I want it to be handled in my service."
 - Kept: `SchemeService` sets the key on every save, as I decided. The formula is in a small pure class so it can be unit tested.
 - Changed/rejected: Claude found that a `|` in a name or address can create a false duplicate. I took its recommendation to document that as a known limit rather than add escaping.
-- Verified by: 156 tests passed. Removing each behaviour made tests fail (3, 1, 1, 7, 5 and 2). Duplicates aren't blocked until the unique index and the 409 exist. Zakaria approved.
+- Verified by: 156 tests passed. Removing each behaviour made tests fail (3, 1, 1, 7, 5 and 2). Duplicates aren't blocked until the unique index and the 409 exist. Zakaria approved. Commit e11e458.
+
+### 2026-11-04 — Step 5: conflicts and errors (Claude Code)
+- Goal: return separate 409s for a stale version and a duplicate scheme, and a generic 500 with no internal details outside Development.
+- Prompt: "I want you to write the missing logic and validators while I validate each step"
+- Kept: the repository reports duplicates and the service reports stale versions, with one filter producing both 409s, each with its own title.
+- Changed/rejected: nothing. I accepted that the stale version check assumes nothing gets deleted, which holds because delete is out of scope.
+- Verified by: 172 tests passed using a fake repository. Removing each behaviour made tests fail (5, 2, 4 and 3). The real Mongo duplicate error is handled in step 6. Zakaria approved.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -123,8 +130,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | Summary passed an empty array with no filter, while the list passed `null` | Fixed (step 3) | An empty Mongo `$in` filter could have made the summary show zeros |
 | `duplicateKey` was never set | Fixed (step 4) | Once the unique index exists, the second scheme saved would have been rejected |
 | A `\|` in a name or address can create a false duplicate key | Disagreed | Too rare to justify escaping, so it's documented as a known limit in design section 3 |
-| A stale version returns 404 instead of 409 | Open (step 5) | Design section 5.4 requires 409 |
-| Duplicate schemes have no 409 | Open (step 5) | Design section 3 requires 409 |
+| A stale version returned 404 instead of 409 | Fixed (step 5) | Design section 5.4 requires 409 |
+| Duplicate schemes had no 409 | Fixed (step 5), real Mongo error handled in step 6 | Design section 3 requires 409 |
 | Repository methods are not implemented, and indexes don't exist | Open (step 6) | Every real request that reaches the repository fails with a 500 |
 | Malformed ids must return 404 | Open (step 6) | Design section 4.2 |
 | Not every endpoint has a test yet | Open (step 7) | My CLAUDE.md rule requires at least one test per endpoint |

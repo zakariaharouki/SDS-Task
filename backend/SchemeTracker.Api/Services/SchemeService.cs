@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using FluentValidation;
 using SchemeTracker.Api.Dtos;
+using SchemeTracker.Api.Exceptions;
 using SchemeTracker.Api.Interfaces;
 using SchemeTracker.Api.Mapping;
 using SchemeTracker.Api.Models;
@@ -153,9 +154,10 @@ public class SchemeService : ISchemeService
             request.Version,
             cancellationToken);
 
+        // The scheme was found above, so no match here means the version was out of date.
         if (updated == null)
         {
-            return null;
+            throw new SchemeVersionConflictException();
         }
 
         decimal? percentage = SchemeCalculator.CalculateAffordablePercent(

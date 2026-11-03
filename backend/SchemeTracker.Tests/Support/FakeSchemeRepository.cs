@@ -1,3 +1,4 @@
+using SchemeTracker.Api.Exceptions;
 using SchemeTracker.Api.Interfaces;
 using SchemeTracker.Api.Models;
 
@@ -15,6 +16,9 @@ public class FakeSchemeRepository : ISchemeRepository
 
     public string? LastSortDir { get; private set; }
 
+    /// <summary>Behaves like the unique index on duplicateKey. Off by default so other tests can reuse names.</summary>
+    public bool EnforceUniqueKeys { get; set; }
+
     /// <summary>What is stored for an id, for checking fields the API doesn't return.</summary>
     public Scheme Stored(string id) => _schemes[id];
 
@@ -31,6 +35,7 @@ public class FakeSchemeRepository : ISchemeRepository
 
     public Task<Scheme> CreateAsync(Scheme scheme, CancellationToken cancellationToken = default)
     {
+        ThrowIfKeyIsTaken(scheme);
         scheme.Id = (++_nextId).ToString("x24");
         _schemes[scheme.Id] = Copy(scheme);
         return Task.FromResult(scheme);
@@ -44,6 +49,8 @@ public class FakeSchemeRepository : ISchemeRepository
             return Task.FromResult<Scheme?>(null);
         }
 
+        ThrowIfKeyIsTaken(scheme);
+
         var updated = Copy(scheme);
         updated.Version = expectedVersion + 1;
         _schemes[scheme.Id] = updated;
@@ -54,6 +61,15 @@ public class FakeSchemeRepository : ISchemeRepository
     {
         LastStatuses = statuses;
         return Task.FromResult<IReadOnlyList<SchemeStatusTotals>>([]);
+    }
+
+    private void ThrowIfKeyIsTaken(Scheme scheme)
+    {
+        if (EnforceUniqueKeys
+            && _schemes.Values.Any(other => other.Id != scheme.Id && other.DuplicateKey == scheme.DuplicateKey))
+        {
+            throw new DuplicateSchemeException();
+        }
     }
 
     // The service changes the object it loads, so a copy keeps "stored" separate, as a database would.

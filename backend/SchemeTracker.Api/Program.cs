@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ValidationExceptionFilter>();
+        options.Filters.Add<ConflictExceptionFilter>();
         options.ModelBinderProviders.Insert(0, new SchemeStatusModelBinderProvider());
     })
     .AddJsonOptions(options =>
@@ -26,6 +27,7 @@ builder.Services.AddControllers(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
@@ -58,6 +60,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // Generic 500 with a trace id. Development keeps the detailed error page.
+    app.UseExceptionHandler();
 }
 
 app.UseHttpsRedirection();

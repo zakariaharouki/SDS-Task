@@ -365,6 +365,7 @@ backend/
   SchemeTracker.Api/
     Controllers/    HTTP only: routes, status codes
     Dtos/           Request and response shapes (the API contract)
+    Exceptions/     Conflicts with existing data, returned as 409
     Interfaces/     ISchemeService, ISchemeRepository
     Mapping/        DTO ↔ model copying, no business rules
     Models/         Scheme, TenureMix, TenureLine, SchemeTotals, SchemeStatus,
