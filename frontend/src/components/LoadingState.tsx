@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react'
 // The API's free hosting sleeps when idle and can take up to a minute to wake.
 const WAKING_DELAY_MS = 3000
 
-export default function LoadingState() {
+interface LoadingStateProps {
+  label?: string
+}
+
+export default function LoadingState({ label = 'Loading…' }: LoadingStateProps) {
   const [waking, setWaking] = useState(false)
 
   useEffect(() => {
@@ -13,9 +17,7 @@ export default function LoadingState() {
 
   return (
     <p role="status" className="page-note">
-      {waking
-        ? 'Waking up the server… This can take up to a minute.'
-        : 'Loading…'}
+      {waking ? 'Waking up the server… This can take up to a minute.' : label}
     </p>
   )
 }

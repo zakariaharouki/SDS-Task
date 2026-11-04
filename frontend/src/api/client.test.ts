@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeScheme } from '../test/schemes'
 import type { SchemeSummary } from '../types/scheme'
-import { ApiError, getSchemes, getSchemeSummary } from './client'
+import { ApiError, createScheme, getSchemes, getSchemeSummary } from './client'
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -95,6 +95,40 @@ describe('filter and sort', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.test/api/schemes/summary?status=Complete',
     )
+  })
+})
+
+describe('createScheme', () => {
+  const scheme = {
+    name: 'Riverside',
+    siteAddress: 'Leeds',
+    status: 'Appraisal' as const,
+    tenureMix: makeScheme().tenureMix,
+  }
+
+  it('posts the scheme as JSON and returns what the API saved', async () => {
+    const created = makeScheme({ id: 'new-id' })
+    fetchMock.mockResolvedValue(json(created, 201))
+
+    await expect(createScheme(scheme)).resolves.toEqual(created)
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.test/api/schemes')
+    expect(init?.method).toBe('POST')
+    expect(new Headers(init?.headers).get('Content-Type')).toBe('application/json')
+    expect(JSON.parse(String(init?.body))).toEqual(scheme)
+  })
+
+  it('keeps the field errors from a rejected save', async () => {
+    const errors = { name: ['Name is required.'] }
+    fetchMock.mockResolvedValue(
+      json({ type: 't', title: 'Invalid', status: 400, errors }, 400),
+    )
+
+    const error = await errorFrom(createScheme(scheme))
+
+    expect(error.status).toBe(400)
+    expect(error.problem?.errors).toEqual(errors)
   })
 })
 

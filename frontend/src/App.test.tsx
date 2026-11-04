@@ -21,20 +21,20 @@ describe('routes', () => {
     ).toBeTruthy()
   })
 
-  it.each(['/schemes/new', '/schemes/abc/edit'])(
-    '%s shows the form page, with a way back to the list',
-    (route) => {
-      renderApp(route)
+  it.each([
+    ['/schemes/new', 'Add scheme'],
+    ['/schemes/abc/edit', 'Edit scheme'],
+  ])('%s shows "%s", with a way back to the list', (route, heading) => {
+    renderApp(route)
 
-      expect(screen.getByRole('heading', { name: 'Scheme form' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
 
-      fireEvent.click(screen.getByRole('link', { name: 'Back to schemes' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Back to schemes' }))
 
-      expect(
-        screen.getByRole('heading', { name: 'Scheme Pipeline Tracker' }),
-      ).toBeTruthy()
-    },
-  )
+    expect(
+      screen.getByRole('heading', { name: 'Scheme Pipeline Tracker' }),
+    ).toBeTruthy()
+  })
 
   it('an unknown address shows page not found', () => {
     renderApp('/nope')
