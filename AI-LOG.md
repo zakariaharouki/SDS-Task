@@ -150,6 +150,13 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Changed/rejected: the throwaway tests became 28 project tests instead of 29. Claude dropped the checks of my types against a saved API response, because a frozen copy can't notice the API changing, and the contrast checks with hard-coded colours. The badge contrast test now reads the colour the component actually renders. Claude asked whether `SummaryCards` should show the `byStatus` breakdown, and I decided to leave it out. Design section 6 asks for a shared `Percent` component, and I decided to keep `formatPercent` instead, since it also gives one place to test "n/a".
 - Verified by: 28 tests, the build and lint passed locally, including three fresh `npm ci` runs following the CI steps. 13 of 13 deliberate faults were caught. In a real browser in dark mode, caption contrast went from 1.0 to 16.25. GitHub Actions run 41838591234 passed all three jobs. One test worker crashed once (exit code 134) on the first local run after installing and didn't come back in 8 later local runs or in CI, so the cause is unknown. I had my original components committed first, unchanged (5c3e7c8), then the fixes (8dfa9a0) and the test tools (1015f81), so the history shows who wrote what.
 
+### 2026-11-04 — Frontend step 1: API client (Claude Code)
+- Goal: typed calls for the scheme list and summary, using `VITE_API_BASE_URL`, with errors the UI can show. No visible change until the list page in step 2.
+- Prompt: "yes approved" to the four-step frontend plan, starting with step 1.
+- Kept: one `ApiError` type for every failure, with a friendly message, the status and any Problem Details. Claude added two cases I hadn't listed: a missing API address fails clearly, and a 200 that isn't JSON is rejected, because a wrong address can return a web page. Also `frontend/.env.example`, because Vite doesn't read the `.env` in the repo root. Updated design sections 2.5 and 6 to name `formatPercent`, as I decided.
+- Changed/rejected: nothing yet. Filter and sort parameters wait for step 3.
+- Verified by: 40 tests, the build and lint passed locally, and 12 of 12 deliberate faults in the client were caught. A throwaway run against real servers, read only: the live API returned the list and summary, my Vercel site gave the "unexpected response" error, an unknown API path gave a 404, and a closed port gave the "could not reach" error. Not committed yet: awaiting my review.
+
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
 - Final: "Yes I meant repository layer by creating DTOs, Mapping, Controllers (Empty I will fill in the logic later), Services and Interfaces. I also want you to add all Services to program.cs as usual."
