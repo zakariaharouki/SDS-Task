@@ -29,6 +29,14 @@ public class SchemeService : ISchemeService
         _queryValidator = queryValidator;
     }
 
+    // Whole milliseconds, because that's all MongoDB stores. Otherwise a create response
+    // wouldn't match the same scheme when it is read back.
+    private DateTime UtcNow()
+    {
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        return now.AddTicks(-(now.Ticks % TimeSpan.TicksPerMillisecond));
+    }
+
     // "No filter" reaches the repository as null, however the caller expressed it.
     private static IReadOnlyList<SchemeStatus>? NoFilterAsNull(IReadOnlyList<SchemeStatus>? statuses) =>
         statuses is { Count: > 0 } ? statuses : null;
@@ -99,7 +107,7 @@ public class SchemeService : ISchemeService
         scheme.Totals = SchemeCalculator.CalculateTotals(scheme.TenureMix);
 
         // Set the initial version and timestamps.
-        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var now = UtcNow();
 
         scheme.Version = 1;
         scheme.CreatedAt = now;
@@ -146,7 +154,7 @@ public class SchemeService : ISchemeService
         scheme.Totals = SchemeCalculator.CalculateTotals(scheme.TenureMix);
 
         // Keep CreatedAt unchanged.
-        scheme.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        scheme.UpdatedAt = UtcNow();
 
         // The repository checks the version and increments it atomically.
         var updated = await _repository.UpdateAsync(

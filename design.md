@@ -439,6 +439,8 @@ other (last write wins). Cheap to add, and a good "what would break" answer.
 
 - All timestamps UTC (`DateTime.UtcNow` via an injected `TimeProvider`, so tests can
   control time). The UI converts to local time for display.
+- Timestamps are set to whole milliseconds, because that's all MongoDB stores, so a
+  create response matches the same scheme when it is read back.
 
 ---
 

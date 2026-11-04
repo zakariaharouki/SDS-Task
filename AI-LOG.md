@@ -105,8 +105,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Goal: send HTTP requests through the whole API to real MongoDB, covering every endpoint and the design section 7.2 cases.
 - Prompt: "A and step 6 is approved", choosing endpoint tests before deployment setup.
 - Kept: one test host running the real API against a throwaway database, never Atlas. `SchemeCalculator` tests stay mine.
-- Changed/rejected: nothing yet.
-- Verified by: CI run to be recorded. Awaiting my approval.
+- Changed/rejected: nothing yet. The tests found one real bug (see AI code review findings).
+- Verified by: GitHub Actions run 41804539402 ran 218 tests with none skipped: 217 passed and 1 failed. Commit c5f5beb. Awaiting my decision on the fix.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -149,6 +149,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | Duplicate schemes had no 409 | Fixed (step 5), real Mongo error handled in step 6 | Design section 3 requires 409 |
 | Repository methods were not implemented, and indexes didn't exist | Fixed (step 6) | Every real request that reached the repository failed with a 500 |
 | Malformed ids must return 404 | Fixed (step 6) | Design section 4.2 |
-| Not every endpoint has a test yet | Open (step 7) | My CLAUDE.md rule requires at least one test per endpoint |
+| Not every endpoint had a test through to real MongoDB | Fixed (step 7) | My CLAUDE.md rule requires at least one test per endpoint |
+| `POST` returned timestamps with more precision than MongoDB stores, so a following `GET` didn't match | Fixed (step 7) | Found by the step 7 tests. I approved setting timestamps to whole milliseconds, instead of re-reading after every insert |
 | Duplicate `using` in `SchemeService` and unused `using` in `SchemesController` | Open | Small cleanups I haven't decided on |
 | `/health`, CORS, `Dockerfile`, `$PORT`, Swagger outside Development, stock frontend page | Open (after step 7) | Needed before deploying to Render and Vercel |

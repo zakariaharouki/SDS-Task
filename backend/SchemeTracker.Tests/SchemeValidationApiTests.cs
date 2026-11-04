@@ -57,6 +57,16 @@ public class SchemeValidationApiTests : IClassFixture<SchemeApiFactory>
     }
 
     [Fact]
+    public async Task Timestamps_are_whole_milliseconds_to_match_what_mongodb_stores()
+    {
+        var response = await PostAsync(Fields(name: "Timestamps " + Guid.NewGuid()));
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(0, json.RootElement.GetProperty("createdAt").GetDateTime().Ticks % TimeSpan.TicksPerMillisecond);
+        Assert.Equal(0, json.RootElement.GetProperty("updatedAt").GetDateTime().Ticks % TimeSpan.TicksPerMillisecond);
+    }
+
+    [Fact]
     public async Task Maximum_values_do_not_overflow()
     {
         var response = await PostAsync(Fields(mix: Mix(homes: 10_000, averageValue: "10000000")));
