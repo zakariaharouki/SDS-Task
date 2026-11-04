@@ -582,8 +582,9 @@ CI (see 5.2). Badge in README.
 - Indexes created at startup (idempotent `CreateMany`). If that fails, the API stops,
   because the unique index is what blocks duplicates. So the API needs a reachable
   MongoDB to start, including in local development.
-- A seed script / endpoint-free seed (`dotnet run -- seed`) with ~8 realistic schemes
-  across all statuses, so reviewers don't open an empty app. Not exposed over HTTP.
+- 8 made-up sample schemes across all statuses were added once through the live API,
+  so reviewers don't open an empty app. This replaces the planned seed command: it's
+  one less piece of code to keep, and the trade-off is that there's nothing to rerun.
 
 ---
 
@@ -609,7 +610,9 @@ CI (see 5.2). Badge in README.
 The README must cover:
 
 - What it is, who it is for, where to start
-- How to run (local Mongo via `docker compose`, API, frontend) and how to run tests
+- Where to try the deployed app, how to run the API and frontend against a hosted
+  MongoDB, and how to run tests. Nobody needs a local MongoDB, because the app is
+  deployed and the database tests start their own.
 - Data design and validation rules (summary of sections 2 and 3)
 - Decisions and trade-offs, including what was left out (section 9)
 - What I'd do next with more time
@@ -627,7 +630,7 @@ The README must cover:
 | # | Decision | Reason | Trade-off |
 |---|----------|--------|-----------|
 | 1 | Tenure mix as fixed object | Missing/duplicate tenures impossible | New tenure = code change |
-| 2 | `decimal` / `Decimal128` for money; UI never computes money | No floating-point errors | Slightly more mapping config |
+| 2 | `decimal` / `Decimal128` for money; the UI only previews money, in whole pence, and saved figures come from the API | No floating-point errors | Slightly more mapping config |
 | 3 | Status stored as string | Readable; enum reorder can't corrupt data | Slightly larger documents |
 | 4 | Sort status by pipeline order | Matches how users think | Custom sort expression |
 | 5 | Any status transition allowed | Schemes really do go backwards | No guard against mistakes |

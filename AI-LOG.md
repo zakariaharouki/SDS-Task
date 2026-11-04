@@ -183,7 +183,21 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Prompt: "done", after Claude said it would start step 4b next.
 - Kept: a scheme loads once per visit, so nothing refreshes over what's being typed, and the next visit loads the latest values. A version conflict keeps my typing and offers "Reload latest version" instead of a retry. A missing scheme says it could not be found.
 - Changed/rejected: nothing yet. A real successful edit hasn't been run, because it would change data, so it needs my go-ahead after deploy.
-- Verified by: 285 tests, the build and lint passed. 19 of 20 deliberate faults were caught on a fresh install; the miss showed two settings did nothing, so Claude removed them, and the 2 faults for the later reload fix were also caught. In a real browser against the live API, with nothing changed: the form loaded the real scheme, a real stale version got a 409 and the reload prompt, a real duplicate showed on both fields, and a bad id gave "could not be found" after one request. Saving successfully used a made-up response. I reviewed it, approved the commit, and approved one real edit of the test scheme after deploy.
+- Verified by: 285 tests, the build and lint passed. 19 of 20 deliberate faults were caught on a fresh install; the miss showed two settings did nothing, so Claude removed them, and the 2 faults for the later reload fix were also caught. In a real browser against the live API, with nothing changed: the form loaded the real scheme, a real stale version got a 409 and the reload prompt, a real duplicate showed on both fields, and a bad id gave "could not be found" after one request. Saving successfully used a made-up response. I reviewed it and approved the commit (486bcdd), and GitHub Actions run 41916106857 passed all three jobs, with 285 frontend and 239 backend tests. I merged it (PR #10). With my approval, Claude then made one real edit of the test scheme on my Vercel site: market sale homes from 30 to 31 returned a 200, the version went from 1 to 2, `createdAt` was kept, and the saved total matched the preview (£41,771,610.84). It also sent one save with the old version, which the API rejected with a 409, so nothing else changed, and the reload prompt brought back the saved values.
+
+### 2026-11-04 — README (Claude Code)
+- Goal: write the README the brief asks for, simple and in my own voice, for whoever reviews the project.
+- Prompt: "Yes make it simple and humanized" and "I already deployed it so no need for anyone to run mongo locally"
+- Kept: the live site as the starting point, a short guide for trying each feature, and the AI sections drawn from this log. Claude pointed out that a local frontend can't call the live API, because it only allows my Vercel address, so the README says that.
+- Changed/rejected: I rejected adding `docker-compose.yml`, because nobody needs a local MongoDB. Design section 10 now says so. I also had the stock `frontend/README.md` replaced with a short pointer. Claude corrected decision 2 in the design, which said the UI never computes money, now that the form has a preview.
+- Verified by: Claude checked the commands and links against the repo. The local API steps weren't run, because they need a real connection string. I reviewed it and approved the commit. The session export link is still to add.
+
+### 2026-11-04 — Sample data (Claude Code)
+- Goal: give reviewers something to look at instead of an empty app.
+- Prompt: "do the plan and no I do not want extra code"
+- Kept: 8 made-up schemes across all four statuses, including an Appraisal scheme with 0 homes showing "n/a", and the same name at two addresses.
+- Changed/rejected: I rejected the `dotnet run -- seed` command Claude proposed from design section 8, because I don't want the extra code. Claude added the schemes once through the live API with a throwaway script outside the repo, and updated the design. The trade-off is that there's nothing to rerun.
+- Verified by: all 8 returned 201, and each saved total matched a separate calculation in the script. On the real site, default, name, homes and value sorting were correct with 10 real rows, and filtering and the summary followed. Claude's first read of the ascending sorts was too early and showed the previous order, so it rechecked instead of assuming.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -242,6 +256,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | `frontend/vercel.json` didn't exist | Fixed (PR #4) | Deep links would have failed on Vercel |
 | The frontend still shows the stock page, and my components aren't displayed anywhere | Fixed (step 2) | The list page now shows them with live data |
 | `POST` returned an `http://` `Location` on Render | Fixed (PR #5, confirmed on the live site) | Render handles HTTPS, so the app needs `X-Forwarded-Proto` to build correct links |
+| The Total value card wrapped mid-number once the sample data made the total large | Fixed | Found in a screenshot of the real site. Claude showed me the edit first, as I'd asked, and the total now fits on one line from desktop to phone |
 | Table caption was invisible in dark mode | Fixed (8dfa9a0) | The table's white background doesn't reach the caption, so it was dark text on a dark page |
 | Money, number and percent formatting was written twice | Fixed (8dfa9a0) | Design section 6 wants one place for it |
 | Empty message differed from design section 6 | Fixed (8dfa9a0) | Design section 6 specifies the wording |
