@@ -68,20 +68,22 @@ builder.Services.AddScoped<ISchemeService, SchemeService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     // Generic 500 with a trace id. Development keeps the detailed error page.
     app.UseExceptionHandler();
 }
 
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseCors();
 
-app.UseHttpsRedirection();
+// Render handles HTTPS before requests reach the app, so only redirect in Development.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 

@@ -568,6 +568,8 @@ CI (see 5.2). Badge in README.
 | Frontend | Vercel          | `VITE_API_BASE_URL` env var; SPA rewrite of all routes to `index.html` (`vercel.json`) so deep links work |
 | Database | MongoDB Atlas M0 | Separate DB user with readWrite on this database only |
 
+- Render handles HTTPS before requests reach the app, so the API only redirects to
+  HTTPS in Development. Swagger stays on in every environment, for testers.
 - **Atlas network access is `0.0.0.0/0`.** Reason: Render's free tier has no static
   outbound IPs. Trade-off: security relies on the strong DB password + TLS only.
   With a paid tier, I'd restrict to Render's static IPs.
