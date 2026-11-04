@@ -108,6 +108,13 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Changed/rejected: the tests found one real bug (see AI code review findings), and I approved the fix Claude recommended. I took its advice to delete the redundant `MONGODB_USERNAME` and `MONGODB_PASSWORD` secrets, since the connection string is enough. I rejected committing my `UserSecretsId`, because I don't want it shared.
 - Verified by: GitHub Actions run 41804539402 ran 218 tests and 1 failed on that bug. After the fix, run 41807014655 passed all 219 with none skipped. Zakaria approved. Commits c5f5beb and 9eff229.
 
+### 2026-11-04 — Deployment setup: health, CORS, hosting and Docker (Claude Code)
+- Goal: prepare the API to run on Render, without deploying anything yet.
+- Prompt: "I approve option B but once you prepare the docker for render notify me"
+- Kept: its recommendations that an empty CORS list still lets the API start, that a `*` is ignored, that HTTPS redirection runs only in Development because Render handles HTTPS, and that the seed script and `docker-compose` stay out of this plan. A CI job that builds the image and runs it the way Render would.
+- Changed/rejected: nothing yet.
+- Verified by: tests for each behaviour, each shown to fail with that behaviour removed. CI run to be recorded. Awaiting my review.
+
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
 - Final: "Yes I meant repository layer by creating DTOs, Mapping, Controllers (Empty I will fill in the logic later), Services and Interfaces. I also want you to add all Services to program.cs as usual."
@@ -152,4 +159,5 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | Not every endpoint had a test through to real MongoDB | Fixed (step 7) | My CLAUDE.md rule requires at least one test per endpoint |
 | `POST` returned timestamps with more precision than MongoDB stores, so a following `GET` didn't match | Fixed (step 7) | Found by the step 7 tests. I approved setting timestamps to whole milliseconds, instead of re-reading after every insert |
 | Duplicate `using` in `SchemeService` and unused `using` in `SchemesController` | Open | Small cleanups I haven't decided on |
-| `/health`, CORS, `Dockerfile`, `$PORT`, Swagger outside Development, stock frontend page | Open (after step 7) | Needed before deploying to Render and Vercel |
+| `/health`, CORS, `Dockerfile`, `$PORT`, Swagger outside Development were missing | Fixed (deployment setup) | Needed before deploying to Render |
+| `frontend/vercel.json` and the frontend itself don't exist yet (stock page only) | Open | Needed before deploying to Vercel |

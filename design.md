@@ -379,8 +379,7 @@ backend/
   Dockerfile
 ```
 
-`SchemeCalculator` and `SchemeDuplicateKey` are in `Services/`. The `Dockerfile` is
-planned but not added yet.
+`SchemeCalculator` and `SchemeDuplicateKey` are in `Services/`.
 
 ### 5.1 Layers
 
@@ -568,6 +567,9 @@ CI (see 5.2). Badge in README.
 | Frontend | Vercel          | `VITE_API_BASE_URL` env var; SPA rewrite of all routes to `index.html` (`vercel.json`) so deep links work |
 | Database | MongoDB Atlas M0 | Separate DB user with readWrite on this database only |
 
+- On Render, set Root Directory to `backend` and Dockerfile Path to `./Dockerfile`. The
+  image runs as non-root and holds no credentials. CI builds it and runs it against a
+  throwaway MongoDB on every push, so a broken image shows up before Render builds it.
 - Render handles HTTPS before requests reach the app, so the API only redirects to
   HTTPS in Development. Swagger stays on in every environment, for testers.
 - **Atlas network access is `0.0.0.0/0`.** Reason: Render's free tier has no static
