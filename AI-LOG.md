@@ -113,7 +113,14 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Prompt: "I approve option B but once you prepare the docker for render notify me"
 - Kept: its recommendations that an empty CORS list still lets the API start, that a `*` is ignored, that HTTPS redirection runs only in Development because Render handles HTTPS, and that the seed script and `docker-compose` stay out of this plan. A CI job that builds the image and runs it the way Render would.
 - Changed/rejected: nothing yet.
-- Verified by: tests for each behaviour, each shown to fail with that behaviour removed. CI run to be recorded. Awaiting my review.
+- Verified by: GitHub Actions run 41809380943 passed 237 tests with none skipped. The image was built and run on a custom `$PORT` as a non-root user, with a real save (201) and a duplicate (409) against throwaway MongoDB. It hasn't run against Atlas yet. Commits a043157, 4ccae26, 6b6a5d1 and 64d49f1. I merged it (PR #3) and deployed the API to Render myself.
+
+### 2026-11-04 — Vercel config (Claude Code)
+- Goal: make deep links such as `/schemes/new` work once the frontend is on Vercel.
+- Prompt: "I merged and deployed render. Do B5 and I will prepare the setup in vercel"
+- Kept: one rewrite sending all routes to `index.html`, as design section 8 specifies. I'm setting up Vercel myself.
+- Changed/rejected: nothing yet.
+- Verified by: the frontend build passed. The rewrite can only really be tested on Vercel, and there are no routes to test until the frontend exists. Awaiting my review.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
