@@ -28,6 +28,7 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
@@ -74,6 +75,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 
