@@ -4,9 +4,11 @@ import {
   NEW_SCHEME_VALUES,
   previewLineValue,
   previewScheme,
+  toFormValues,
   toRequest,
   type SchemeFormValues,
 } from './schemeFormValues'
+import { makeScheme } from '../../test/schemes'
 
 const mix = (
   socialRent: [string, string],
@@ -37,6 +39,35 @@ describe('NEW_SCHEME_VALUES', () => {
       affordableRent: { homes: 0, averageValue: 0 },
       sharedOwnership: { homes: 0, averageValue: 0 },
       marketSale: { homes: 0, averageValue: 0 },
+    })
+  })
+})
+
+describe('toFormValues', () => {
+  it('turns a saved scheme into form text that sends back the same figures', () => {
+    const scheme = makeScheme({
+      name: 'Riverside',
+      siteAddress: 'Leeds',
+      status: 'Complete',
+      tenureMix: {
+        socialRent: { homes: 10, averageValue: 150000.5 },
+        affordableRent: { homes: 0, averageValue: 0 },
+        sharedOwnership: { homes: 5, averageValue: 0.07 },
+        marketSale: { homes: 30, averageValue: 1234567.89 },
+      },
+    })
+
+    const values = toFormValues(scheme)
+
+    expect(values.tenureMix.socialRent).toEqual({
+      homes: '10',
+      averageValue: '150000.5',
+    })
+    expect(toRequest(values)).toEqual({
+      name: 'Riverside',
+      siteAddress: 'Leeds',
+      status: 'Complete',
+      tenureMix: scheme.tenureMix,
     })
   })
 })

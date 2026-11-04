@@ -320,7 +320,8 @@
 }
 
 .scheme-form .error-banner,
-.scheme-form .page-note {
+.scheme-form .page-note,
+.page > .error-banner {
   margin-bottom: 16px;
 }
 

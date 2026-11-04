@@ -75,9 +75,15 @@ beforeEach(() => {
       return response
     }
 
-    return new URL(String(input)).pathname.endsWith('/summary')
-      ? json(summaryOf(saved))
-      : json(saved)
+    const { pathname } = new URL(String(input))
+
+    if (pathname.endsWith('/summary')) {
+      return json(summaryOf(saved))
+    }
+
+    return pathname === '/api/schemes'
+      ? json(saved)
+      : json(saved.find((scheme) => pathname.endsWith(scheme.id)))
   })
   vi.stubGlobal('fetch', fetchMock)
   vi.stubEnv('VITE_API_BASE_URL', 'https://api.test')
