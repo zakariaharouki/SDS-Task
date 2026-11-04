@@ -12,6 +12,9 @@ const queryClient = new QueryClient({
       // Without this, being offline pauses a request forever instead of showing the error.
       networkMode: 'always',
     },
+    mutations: {
+      networkMode: 'always',
+    },
   },
 })
 

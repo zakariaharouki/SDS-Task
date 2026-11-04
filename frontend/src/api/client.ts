@@ -1,4 +1,5 @@
 import type {
+  CreateSchemeRequest,
   ProblemDetails,
   Scheme,
   SchemeStatus,
@@ -52,12 +53,12 @@ const asProblem = (body: unknown): ProblemDetails | null =>
     ? (body as ProblemDetails)
     : null
 
-const getJson = async <T>(path: string): Promise<T> => {
+const getJson = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const url = apiUrl(path)
   let response: Response
 
   try {
-    response = await fetch(url)
+    response = await (init ? fetch(url, init) : fetch(url))
   } catch {
     throw new ApiError(
       'Could not reach the server. Check your connection and try again.',
@@ -104,3 +105,10 @@ export const getSchemeSummary = (statuses: SchemeStatus[] = []) =>
       toSearchParams({ ...DEFAULT_SCHEME_QUERY, statuses }),
     ),
   )
+
+export const createScheme = (scheme: CreateSchemeRequest) =>
+  getJson<Scheme>('/api/schemes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(scheme),
+  })

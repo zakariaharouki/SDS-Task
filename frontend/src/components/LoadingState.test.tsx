@@ -23,6 +23,20 @@ describe('LoadingState', () => {
     expect(screen.getByRole('status').textContent).toBe('Loading…')
   })
 
+  it('can use its own wording, and still mentions a server that is waking up', () => {
+    render(<LoadingState label="Saving…" />)
+
+    expect(screen.getByRole('status').textContent).toBe('Saving…')
+
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+
+    expect(screen.getByRole('status').textContent).toContain(
+      'Waking up the server…',
+    )
+  })
+
   it('says the server is waking up after a few seconds', () => {
     render(<LoadingState />)
 

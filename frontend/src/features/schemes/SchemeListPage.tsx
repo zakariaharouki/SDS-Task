@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { getSchemes, getSchemeSummary } from '../../api/client'
 import {
   isFiltered,
@@ -13,11 +14,25 @@ import LoadingState from '../../components/LoadingState'
 import SchemesTable from '../../components/SchemesTable'
 import StatusFilter from '../../components/StatusFilter'
 import SummaryCards from '../../components/SummaryCards'
+import { wasSaved, type ListState } from './listAddress'
 
 export default function SchemeListPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const query = parseSchemeQuery(searchParams)
+  const [showSaved] = useState(() => wasSaved(location.state))
+  const formState: ListState = { listSearch: location.search }
+
+  // Forget the message once shown, so a reload or going back doesn't show it again.
+  useEffect(() => {
+    if (wasSaved(location.state)) {
+      navigate(
+        { search: location.search },
+        { replace: true, state: null },
+      )
+    }
+  }, [location, navigate])
 
   // The current figures stay on screen while a new filter or sort loads.
   const schemes = useQuery({
@@ -65,7 +80,9 @@ export default function SchemeListPage() {
         ) : (
           <SchemesTable
             schemes={schemes.data}
-            onEdit={(scheme) => navigate(`/schemes/${scheme.id}/edit`)}
+            onEdit={(scheme) =>
+              navigate(`/schemes/${scheme.id}/edit`, { state: formState })
+            }
             sortBy={query.sortBy}
             sortDir={query.sortDir}
             onSort={(field) => updateQuery(nextSort(query, field))}
@@ -90,7 +107,17 @@ export default function SchemeListPage() {
 
   return (
     <main className="page">
-      <h1>Scheme Pipeline Tracker</h1>
+      <div className="page-heading">
+        <h1>Scheme Pipeline Tracker</h1>
+        <Link to="/schemes/new" state={formState} className="button-link">
+          Add scheme
+        </Link>
+      </div>
+      {showSaved && (
+        <p role="status" className="saved-message">
+          Scheme saved.
+        </p>
+      )}
       <StatusFilter
         selected={query.statuses}
         onChange={(statuses) => updateQuery({ ...query, statuses })}

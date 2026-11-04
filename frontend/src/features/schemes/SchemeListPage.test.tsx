@@ -232,7 +232,7 @@ describe('SchemeListPage', () => {
     )
 
     expect(
-      await screen.findByRole('heading', { name: 'Scheme form' }),
+      await screen.findByRole('heading', { name: 'Edit scheme' }),
     ).toBeTruthy()
   })
 })
