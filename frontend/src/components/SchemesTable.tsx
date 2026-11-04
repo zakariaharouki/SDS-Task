@@ -1,3 +1,4 @@
+import { formatMoney, formatNumber, formatPercent } from '../lib/format'
 import type { Scheme } from '../types/scheme'
 import StatusBadge from './StatusBadge'
 
@@ -10,17 +11,8 @@ export default function SchemesTable({
   schemes,
   onEdit,
 }: SchemesTableProps) {
-  const money = new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-
-  const number = new Intl.NumberFormat('en-GB')
-
   if (schemes.length === 0) {
-    return <p>No schemes found.</p>
+    return <p>No schemes yet. Add your first one.</p>
   }
 
   return (
@@ -34,7 +26,7 @@ export default function SchemesTable({
             <th scope="col">Site address</th>
             <th scope="col">Status</th>
             <th scope="col">Total homes</th>
-            <th scope="col">Affordable</th>
+            <th scope="col">Affordable %</th>
             <th scope="col">Total value</th>
             <th scope="col">Actions</th>
           </tr>
@@ -50,21 +42,17 @@ export default function SchemesTable({
                 <StatusBadge status={scheme.status} />
               </td>
 
-              <td>{number.format(scheme.totalHomes)}</td>
+              <td>{formatNumber(scheme.totalHomes)}</td>
 
-              <td>
-                {scheme.affordablePercent === null
-                  ? 'n/a'
-                  : `${scheme.affordablePercent.toFixed(1)}%`}
-              </td>
+              <td>{formatPercent(scheme.affordablePercent)}</td>
 
-              <td>{money.format(scheme.totalValue)}</td>
+              <td>{formatMoney(scheme.totalValue)}</td>
 
               <td>
                 <button
                   type="button"
                   onClick={() => onEdit(scheme)}
-                  aria-label={`Edit ${scheme.name}`}
+                  aria-label={`Edit ${scheme.name}, ${scheme.siteAddress}`}
                 >
                   Edit
                 </button>
