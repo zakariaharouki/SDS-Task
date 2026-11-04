@@ -192,6 +192,13 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Changed/rejected: I rejected adding `docker-compose.yml`, because nobody needs a local MongoDB. Design section 10 now says so. I also had the stock `frontend/README.md` replaced with a short pointer. Claude corrected decision 2 in the design, which said the UI never computes money, now that the form has a preview.
 - Verified by: Claude checked the commands and links against the repo. The local API steps weren't run, because they need a real connection string. I reviewed it and approved the commit. The session export link is still to add.
 
+### 2026-11-04 — Sample data (Claude Code)
+- Goal: give reviewers something to look at instead of an empty app.
+- Prompt: "do the plan and no I do not want extra code"
+- Kept: 8 made-up schemes across all four statuses, including an Appraisal scheme with 0 homes showing "n/a", and the same name at two addresses.
+- Changed/rejected: I rejected the `dotnet run -- seed` command Claude proposed from design section 8, because I don't want the extra code. Claude added the schemes once through the live API with a throwaway script outside the repo, and updated the design. The trade-off is that there's nothing to rerun.
+- Verified by: all 8 returned 201, and each saved total matched a separate calculation in the script. On the real site, default, name, homes and value sorting were correct with 10 real rows, and filtering and the summary followed. Claude's first read of the ascending sorts was too early and showed the previous order, so it rechecked instead of assuming.
+
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
 - Final: "Yes I meant repository layer by creating DTOs, Mapping, Controllers (Empty I will fill in the logic later), Services and Interfaces. I also want you to add all Services to program.cs as usual."

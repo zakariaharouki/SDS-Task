@@ -582,8 +582,9 @@ CI (see 5.2). Badge in README.
 - Indexes created at startup (idempotent `CreateMany`). If that fails, the API stops,
   because the unique index is what blocks duplicates. So the API needs a reachable
   MongoDB to start, including in local development.
-- A seed script / endpoint-free seed (`dotnet run -- seed`) with ~8 realistic schemes
-  across all statuses, so reviewers don't open an empty app. Not exposed over HTTP.
+- 8 made-up sample schemes across all statuses were added once through the live API,
+  so reviewers don't open an empty app. This replaces the planned seed command: it's
+  one less piece of code to keep, and the trade-off is that there's nothing to rerun.
 
 ---
 

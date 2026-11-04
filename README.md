@@ -12,6 +12,8 @@ A small app for a housing developer's team to keep track of the schemes in their
 
 ## Try it in a few minutes
 
+The schemes you'll see are made-up sample data, so feel free to change them.
+
 1. Click **Add scheme**, enter a name and address, and save with the tenures at 0. An early scheme is allowed to have no homes yet. Its percentage shows as "n/a", not 0%.
 2. Add another scheme and change its status to Planning while it still has 0 homes. You get a warning, and it won't save until you add a home.
 3. Enter homes and average values and watch the preview update. After saving, check that the list shows the same figures.
