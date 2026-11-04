@@ -120,7 +120,35 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Prompt: "I merged and deployed render. Do B5 and I will prepare the setup in vercel"
 - Kept: one rewrite sending all routes to `index.html`, as design section 8 specifies. I'm setting up Vercel myself.
 - Changed/rejected: nothing yet.
-- Verified by: the frontend build passed. The rewrite can only really be tested on Vercel, and there are no routes to test until the frontend exists. Awaiting my review.
+- Verified by: the frontend build passed. I merged it (PR #4) and deployed to Vercel myself. Claude then checked the live site: both `/` and `/schemes/new` return 200, so the rewrite works. The site still shows the stock page until the frontend is built.
+
+### 2026-11-04 — Live API check (Claude Code)
+- Goal: confirm the deployed API really saves to Atlas, not just to the throwaway MongoDB in CI.
+- Prompt: "1. Create the test scheme"
+- Kept: one clearly named test scheme created through the live API. `/health`, `/swagger`, the list and the summary all worked, and a duplicate returned 409.
+- Changed/rejected: nothing. The test scheme is still in Atlas, and I need to delete it before reviewers see the app.
+- Verified by: the live API's responses. This check also found that `POST` returned an `http://` `Location` header on the live site (see the next entries).
+
+### 2026-11-04 — Review of my frontend types and components (Claude Code)
+- Goal: check the types, `SchemesTable`, `SummaryCards`, `StatusBadge` and `schemes.css` I wrote by hand, and suggest minor edits without changing them.
+- Prompt: "check the types and components I added test them and suggest any minor edits" and "Show me before you fix what the edit will be"
+- Kept: Claude tested in a scratch copy against real API responses and changed nothing in my project until I answered.
+- Changed/rejected: nothing rejected. I chose the recommended fixes (next entries), so the optional ones were not made: right-aligned number columns, moving the badge styles to CSS, and removing `App.css`.
+- Verified by: my types matched the live API exactly. 29 throwaway tests passed, and each of 5 deliberate faults made one fail. A real browser in dark mode showed the invisible caption.
+
+### 2026-11-04 — `Location` header fix (Claude Code)
+- Goal: make `POST` return an `https://` `Location` on Render, which handles HTTPS before requests reach the app.
+- Prompt: "apply the changes for the location fix", after Claude showed me the exact edit first, as I'd asked.
+- Kept: reading only `X-Forwarded-Proto`, on its own branch and in its own commit (a050a25).
+- Changed/rejected: nothing. It accepts the header from any proxy, because Render's addresses aren't fixed, and it only affects the scheme of generated links.
+- Verified by: GitHub Actions run 41836831761 passed 239 tests with none skipped. Without `UseForwardedHeaders`, the new https test fails. The live header can only be checked after I merge and Render redeploys.
+
+### 2026-11-04 — Frontend edits and test tools (Claude Code)
+- Goal: apply the recommended review fixes and add Vitest and React Testing Library, as design section 7.3 expects.
+- Prompt: "do all recommended fixes to the frontend" and "yes" to adding the test tools.
+- Kept: the dark-mode caption fix, shared formatting in `lib/format.ts`, the empty message from design section 6, Edit button labels that include the address, the "Affordable %" heading, and types for requests and Problem Details. `npm test` added to CI.
+- Changed/rejected: the throwaway tests became 28 project tests instead of 29. Claude dropped the checks of my types against a saved API response, because a frozen copy can't notice the API changing, and the contrast checks with hard-coded colours. The badge contrast test now reads the colour the component actually renders. Claude asked whether `SummaryCards` should show the `byStatus` breakdown, and I decided to leave it out. Design section 6 asks for a shared `Percent` component, and I decided to keep `formatPercent` instead, since it also gives one place to test "n/a".
+- Verified by: 28 tests, the build and lint passed locally, including three fresh `npm ci` runs following the CI steps. 13 of 13 deliberate faults were caught. In a real browser in dark mode, caption contrast went from 1.0 to 16.25. GitHub Actions run 41838591234 passed all three jobs. One test worker crashed once (exit code 134) on the first local run after installing and didn't come back in 8 later local runs or in CI, so the cause is unknown. I had my original components committed first, unchanged (5c3e7c8), then the fixes (8dfa9a0) and the test tools (1015f81), so the history shows who wrote what.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -136,6 +164,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - **FluentValidation `Transform`:** Claude wrote the validator with an API removed in version 12. The build failed, and it rewrote those rules to check the trimmed value directly.
 - **Pinning CI to Ubuntu 24.04:** when MongoDB 8.0 wouldn't start in CI, Claude assumed Ubuntu 24.04 had an older Linux kernel. It didn't: the run printed `7.0.0`, which is still in the blocked range, and all 25 tests failed again. Claude had printed the kernel version to check that assumption, so the next run showed it was wrong. It undid the pin and moved the tests to MongoDB 7.0.
 - **`id` and `createdAt` in design section 3:** the table said ignore them, while another rule said reject unknown properties. Claude found the contradiction and I decided to reject them.
+- **Leftover test server:** Claude reported stopping its scratch Vite server after the frontend review, but it was still running. It noticed when a new server couldn't take the port and the page title was wrong, so it didn't trust that page's readings as the fixed code. It used them as the "before" reading instead, then stopped the server and confirmed the ports were free.
 
 ## Where I didn't use AI (and why)
 - **Controller actions and `SchemeService` logic:** I wrote these myself, including the totals and percentage formulas, because I wanted to own that logic (my CLAUDE.md rule). Claude only reviewed them, and later moved the formulas and added validation calls with my approval.
@@ -167,4 +196,12 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | `POST` returned timestamps with more precision than MongoDB stores, so a following `GET` didn't match | Fixed (step 7) | Found by the step 7 tests. I approved setting timestamps to whole milliseconds, instead of re-reading after every insert |
 | Duplicate `using` in `SchemeService` and unused `using` in `SchemesController` | Open | Small cleanups I haven't decided on |
 | `/health`, CORS, `Dockerfile`, `$PORT`, Swagger outside Development were missing | Fixed (deployment setup) | Needed before deploying to Render |
-| `frontend/vercel.json` and the frontend itself don't exist yet (stock page only) | Open | Needed before deploying to Vercel |
+| `frontend/vercel.json` didn't exist | Fixed (PR #4) | Deep links would have failed on Vercel |
+| The frontend still shows the stock page, and my components aren't displayed anywhere | Open | Next piece of work |
+| `POST` returned an `http://` `Location` on Render | Fixed (a050a25, not merged yet) | Render handles HTTPS, so the app needs `X-Forwarded-Proto` to build correct links |
+| Table caption was invisible in dark mode | Fixed (8dfa9a0) | The table's white background doesn't reach the caption, so it was dark text on a dark page |
+| Money, number and percent formatting was written twice | Fixed (8dfa9a0) | Design section 6 wants one place for it |
+| Empty message differed from design section 6 | Fixed (8dfa9a0) | Design section 6 specifies the wording |
+| Two schemes with the same name had identical Edit button labels | Fixed (8dfa9a0) | Design section 3 allows the same name at another address, and a screen reader couldn't tell them apart |
+| "Affordable" column showed a percentage | Fixed (8dfa9a0) | "Affordable %" is clearer |
+| No types for requests or Problem Details | Fixed (8dfa9a0) | The form will need them. Checked against real error responses from the live API |
