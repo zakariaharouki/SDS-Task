@@ -30,6 +30,8 @@ public sealed class MongoFixture : IAsyncLifetime
     private MongoDbContainer? _container;
     private MongoClient? _client;
 
+    public string ConnectionString => _container!.GetConnectionString();
+
     public async Task InitializeAsync()
     {
         if (!MongoFactAttribute.CanRun)

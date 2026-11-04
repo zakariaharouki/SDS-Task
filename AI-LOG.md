@@ -101,6 +101,13 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Changed/rejected: the tests use MongoDB 7.0 instead of 8.0, because 8.0 and newer refuse to start on the Linux kernel CI runners use. Claude's first fix for that was wrong (see Rejected / corrected output).
 - Verified by: GitHub Actions run 41737747279 passed with 197 tests and none skipped, including 25 against real MongoDB. Commits 4d8fcc1, 2b541f5 and 5255080. Zakaria approved, including testing on MongoDB 7.0.
 
+### 2026-11-04 — Step 7: endpoint tests (Claude Code)
+- Goal: send HTTP requests through the whole API to real MongoDB, covering every endpoint and the design section 7.2 cases.
+- Prompt: "A and step 6 is approved", choosing endpoint tests before deployment setup.
+- Kept: one test host running the real API against a throwaway database, never Atlas. `SchemeCalculator` tests stay mine.
+- Changed/rejected: nothing yet.
+- Verified by: CI run to be recorded. Awaiting my approval.
+
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
 - Final: "Yes I meant repository layer by creating DTOs, Mapping, Controllers (Empty I will fill in the logic later), Services and Interfaces. I also want you to add all Services to program.cs as usual."
