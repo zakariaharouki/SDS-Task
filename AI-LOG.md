@@ -98,8 +98,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Goal: implement the MongoDB repository and indexes, and test them against real MongoDB in CI.
 - Prompt: "rely on CI because docker will need sometime to be installed in my environment" and "pushing 6 is ok"
 - Kept: pipeline-order status sorting with stable tie-breakers, atomic version checks, translating Mongo's duplicate error, and one status order list shared with the summary.
-- Changed/rejected: nothing yet.
-- Verified by: CI run to be recorded. Awaiting my approval.
+- Changed/rejected: the tests use MongoDB 7.0 instead of 8.0, because 8.0 and newer refuse to start on the Linux kernel CI runners use. Claude's first fix for that was wrong (see Rejected / corrected output).
+- Verified by: GitHub Actions run 41737747279 passed with 197 tests and none skipped, including 25 against real MongoDB. Commits 4d8fcc1, 2b541f5 and 5255080. Zakaria approved, including testing on MongoDB 7.0.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -113,6 +113,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - **"11 tests passed" during the review:** my running API had locked the build output, so the build failed and that result came from old binaries, not my new code. Claude caught this in the build output and re-ran everything in a scratch copy.
 - **Wrong total in design.md:** the examples showed £37,400,000, but the mix adds up to £36,800,000. A throwaway check failed against the example, and working it out by hand showed that the document was wrong, not the code.
 - **FluentValidation `Transform`:** Claude wrote the validator with an API removed in version 12. The build failed, and it rewrote those rules to check the trimmed value directly.
+- **Pinning CI to Ubuntu 24.04:** when MongoDB 8.0 wouldn't start in CI, Claude assumed Ubuntu 24.04 had an older Linux kernel. It didn't: the run printed `7.0.0`, which is still in the blocked range, and all 25 tests failed again. Claude had printed the kernel version to check that assumption, so the next run showed it was wrong. It undid the pin and moved the tests to MongoDB 7.0.
 - **`id` and `createdAt` in design section 3:** the table said ignore them, while another rule said reject unknown properties. Claude found the contradiction and I decided to reject them.
 
 ## Where I didn't use AI (and why)

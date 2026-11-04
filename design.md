@@ -517,6 +517,10 @@ Status ordering: pipeline order, not alphabetical.
 
 Real Mongo in Docker, so `Decimal128` mapping, collation and sorting are actually tested.
 
+The tests use `mongo:7.0`, because 8.0 and newer refuse to start on Linux kernels 6.19
+to 7.0.13, which CI runners currently use. Trade-off: the tests run on an older major
+version than Atlas may use. Move up once runners reach kernel 7.0.14.
+
 - POST valid → 201 + Location; GET by id returns same data with figures
 - POST invalid → 400 with expected field keys
 - `"homes": 2.5`, unknown status, unknown property → 400 friendly message
