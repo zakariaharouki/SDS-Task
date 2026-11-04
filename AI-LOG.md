@@ -256,6 +256,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | `frontend/vercel.json` didn't exist | Fixed (PR #4) | Deep links would have failed on Vercel |
 | The frontend still shows the stock page, and my components aren't displayed anywhere | Fixed (step 2) | The list page now shows them with live data |
 | `POST` returned an `http://` `Location` on Render | Fixed (PR #5, confirmed on the live site) | Render handles HTTPS, so the app needs `X-Forwarded-Proto` to build correct links |
+| The Total value card wrapped mid-number once the sample data made the total large | Fixed | Found in a screenshot of the real site. Claude showed me the edit first, as I'd asked, and the total now fits on one line from desktop to phone |
 | Table caption was invisible in dark mode | Fixed (8dfa9a0) | The table's white background doesn't reach the caption, so it was dark text on a dark page |
 | Money, number and percent formatting was written twice | Fixed (8dfa9a0) | Design section 6 wants one place for it |
 | Empty message differed from design section 6 | Fixed (8dfa9a0) | Design section 6 specifies the wording |
