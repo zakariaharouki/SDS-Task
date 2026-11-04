@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SchemeTracker.Api.Dtos;
@@ -65,7 +66,18 @@ builder.Services.AddHostedService<SchemeIndexInitializer>();
 builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
 builder.Services.AddScoped<ISchemeService, SchemeService>();
 
+// Render handles HTTPS and passes the original scheme in X-Forwarded-Proto. Its proxy addresses
+// aren't fixed, so the header is accepted from any proxy. It only affects the scheme of generated links.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
