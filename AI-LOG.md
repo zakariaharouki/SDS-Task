@@ -105,8 +105,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Goal: send HTTP requests through the whole API to real MongoDB, covering every endpoint and the design section 7.2 cases.
 - Prompt: "A and step 6 is approved", choosing endpoint tests before deployment setup.
 - Kept: one test host running the real API against a throwaway database, never Atlas. `SchemeCalculator` tests stay mine.
-- Changed/rejected: nothing yet. The tests found one real bug (see AI code review findings).
-- Verified by: GitHub Actions run 41804539402 ran 218 tests with none skipped: 217 passed and 1 failed. Commit c5f5beb. Awaiting my decision on the fix.
+- Changed/rejected: the tests found one real bug (see AI code review findings), and I approved the fix Claude recommended. I took its advice to delete the redundant `MONGODB_USERNAME` and `MONGODB_PASSWORD` secrets, since the connection string is enough. I rejected committing my `UserSecretsId`, because I don't want it shared.
+- Verified by: GitHub Actions run 41804539402 ran 218 tests and 1 failed on that bug. After the fix, run 41807014655 passed all 219 with none skipped. Zakaria approved. Commits c5f5beb and 9eff229.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
