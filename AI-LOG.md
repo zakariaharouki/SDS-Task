@@ -141,7 +141,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Prompt: "apply the changes for the location fix", after Claude showed me the exact edit first, as I'd asked.
 - Kept: reading only `X-Forwarded-Proto`, on its own branch and in its own commit (a050a25).
 - Changed/rejected: nothing. It accepts the header from any proxy, because Render's addresses aren't fixed, and it only affects the scheme of generated links.
-- Verified by: GitHub Actions run 41836831761 passed 239 tests with none skipped. Without `UseForwardedHeaders`, the new https test fails. The live header can only be checked after I merge and Render redeploys.
+- Verified by: GitHub Actions run 41836831761 passed 239 tests with none skipped. Without `UseForwardedHeaders`, the new https test fails. I merged it (PR #5). The live header still needs one successful `POST` to confirm, which I'll check during my manual tests.
 
 ### 2026-11-04 — Frontend edits and test tools (Claude Code)
 - Goal: apply the recommended review fixes and add Vitest and React Testing Library, as design section 7.3 expects.
@@ -149,6 +149,20 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - Kept: the dark-mode caption fix, shared formatting in `lib/format.ts`, the empty message from design section 6, Edit button labels that include the address, the "Affordable %" heading, and types for requests and Problem Details. `npm test` added to CI.
 - Changed/rejected: the throwaway tests became 28 project tests instead of 29. Claude dropped the checks of my types against a saved API response, because a frozen copy can't notice the API changing, and the contrast checks with hard-coded colours. The badge contrast test now reads the colour the component actually renders. Claude asked whether `SummaryCards` should show the `byStatus` breakdown, and I decided to leave it out. Design section 6 asks for a shared `Percent` component, and I decided to keep `formatPercent` instead, since it also gives one place to test "n/a".
 - Verified by: 28 tests, the build and lint passed locally, including three fresh `npm ci` runs following the CI steps. 13 of 13 deliberate faults were caught. In a real browser in dark mode, caption contrast went from 1.0 to 16.25. GitHub Actions run 41838591234 passed all three jobs. One test worker crashed once (exit code 134) on the first local run after installing and didn't come back in 8 later local runs or in CI, so the cause is unknown. I had my original components committed first, unchanged (5c3e7c8), then the fixes (8dfa9a0) and the test tools (1015f81), so the history shows who wrote what.
+
+### 2026-11-04 — Frontend step 1: API client (Claude Code)
+- Goal: typed calls for the scheme list and summary, using `VITE_API_BASE_URL`, with errors the UI can show. No visible change until the list page in step 2.
+- Prompt: "yes approved" to the four-step frontend plan, starting with step 1.
+- Kept: one `ApiError` type for every failure, with a friendly message, the status and any Problem Details. Claude added two cases I hadn't listed: a missing API address fails clearly, and a 200 that isn't JSON is rejected, because a wrong address can return a web page. Also `frontend/.env.example`, because Vite doesn't read the `.env` in the repo root. Updated design sections 2.5 and 6 to name `formatPercent`, as I decided.
+- Changed/rejected: nothing yet. Filter and sort parameters wait for step 3.
+- Verified by: 40 tests, the build and lint passed locally, and 12 of 12 deliberate faults in the client were caught. A throwaway run against real servers, read only: the live API returned the list and summary, my Vercel site gave the "unexpected response" error, an unknown API path gave a 404, and a closed port gave the "could not reach" error. Commit 78b497a. It reached the branch just after I merged PR #6, so it isn't in `main` yet.
+
+### 2026-11-04 — Frontend step 2: list page (Claude Code)
+- Goal: replace the stock page with the real list page, showing my `SummaryCards` and `SchemesTable` with live data, and the loading, "Waking up the server…", error-with-retry and empty states from design section 6.
+- Prompt: "you can commit and push and start with step 2"
+- Kept: TanStack Query and React Router, as design section 6 specifies. Figures already on screen stay there if a background refresh fails. Requests still run when the browser reports being offline, so the error and retry button appear instead of the page waiting forever. Claude added `/schemes/new` as a placeholder, like the edit page, and a "Page not found" page, which weren't in the plan. It removed the stock `App.css`, images and `icons.svg`, stopped `#root` centring all text, and changed the page title.
+- Changed/rejected: nothing yet. Until step 4, Edit opens a placeholder and the empty message has no button to add a scheme. I kept the test scheme in Atlas for my own manual tests.
+- Verified by: 59 tests, the build and lint passed, including a fresh `npm ci`, and 20 of 20 deliberate faults were caught. In a real browser through a local proxy to the live API: real figures, Edit and back, deep links, offline and recovery, and "Waking up the server…" after 3 seconds with a delayed response. Calling the API directly from `localhost` gave a real CORS refusal, which showed the error and retry. Looking at the screenshots found a bug no test caught (see Rejected / corrected output). This can only be fully confirmed on Vercel after merging. I reviewed it and approved the commit.
 
 ## Refined prompt
 - v1: "I want you to use repository Layer Architecture."
@@ -164,6 +178,7 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 - **FluentValidation `Transform`:** Claude wrote the validator with an API removed in version 12. The build failed, and it rewrote those rules to check the trimmed value directly.
 - **Pinning CI to Ubuntu 24.04:** when MongoDB 8.0 wouldn't start in CI, Claude assumed Ubuntu 24.04 had an older Linux kernel. It didn't: the run printed `7.0.0`, which is still in the blocked range, and all 25 tests failed again. Claude had printed the kernel version to check that assumption, so the next run showed it was wrong. It undid the pin and moved the tests to MongoDB 7.0.
 - **`id` and `createdAt` in design section 3:** the table said ignore them, while another rule said reject unknown properties. Claude found the contradiction and I decided to reject them.
+- **Overlapping page heading:** Claude's list page set a 32px heading but kept a fixed line height of about 23px from the stock stylesheet, so the title's two lines overlapped on a phone. All tests and contrast checks passed. Claude only found it by looking at a screenshot, then set the line height and checked again.
 - **Leftover test server:** Claude reported stopping its scratch Vite server after the frontend review, but it was still running. It noticed when a new server couldn't take the port and the page title was wrong, so it didn't trust that page's readings as the fixed code. It used them as the "before" reading instead, then stopped the server and confirmed the ports were free.
 
 ## Where I didn't use AI (and why)
@@ -197,8 +212,8 @@ Every entry from 2026-11-03 onwards comes from one Claude Code session. Session 
 | Duplicate `using` in `SchemeService` and unused `using` in `SchemesController` | Open | Small cleanups I haven't decided on |
 | `/health`, CORS, `Dockerfile`, `$PORT`, Swagger outside Development were missing | Fixed (deployment setup) | Needed before deploying to Render |
 | `frontend/vercel.json` didn't exist | Fixed (PR #4) | Deep links would have failed on Vercel |
-| The frontend still shows the stock page, and my components aren't displayed anywhere | Open | Next piece of work |
-| `POST` returned an `http://` `Location` on Render | Fixed (a050a25, not merged yet) | Render handles HTTPS, so the app needs `X-Forwarded-Proto` to build correct links |
+| The frontend still shows the stock page, and my components aren't displayed anywhere | Fixed (step 2) | The list page now shows them with live data |
+| `POST` returned an `http://` `Location` on Render | Fixed (PR #5, live check pending) | Render handles HTTPS, so the app needs `X-Forwarded-Proto` to build correct links |
 | Table caption was invisible in dark mode | Fixed (8dfa9a0) | The table's white background doesn't reach the caption, so it was dark text on a dark page |
 | Money, number and percent formatting was written twice | Fixed (8dfa9a0) | Design section 6 wants one place for it |
 | Empty message differed from design section 6 | Fixed (8dfa9a0) | Design section 6 specifies the wording |

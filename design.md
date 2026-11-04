@@ -110,7 +110,7 @@ easiest thing to unit test:
   rule in section 3 (at least 1 home once past Appraisal), only Appraisal schemes
   can show "n/a".
 - The API returns `null` rather than the string "n/a", so the field stays a number
-  type; the UI's `Percent` component turns `null` into "n/a". Same for the portfolio
+  type; the UI's `formatPercent` turns `null` into "n/a". Same for the portfolio
   summary when the whole portfolio has 0 homes.
 - Rounding only at the end (percentage to 1 dp for display); `totalValue` is exact.
 - Portfolio `affordablePercent` is calculated from portfolio totals
@@ -456,7 +456,7 @@ frontend/
       SchemeFormPage.tsx      Create and edit (same form)
       SchemeDetail.tsx        Figures + optional tenure chart
       validation.ts           Same rules as the API, for instant feedback
-    components/   Money, Percent, StatusBadge, ErrorBanner, LoadingState
+    components/   StatusBadge, ErrorBanner, LoadingState
     lib/format.ts GBP / percent / date formatting
 ```
 
@@ -475,7 +475,7 @@ frontend/
   one"), error (with retry), and the two kinds of 409: version conflict (reload
   prompt) and duplicate scheme (error shown on the name and address fields).
 - `null` percentages render as "n/a" everywhere (list, detail, summary), via one
-  shared `Percent` component, so there is one place to test it.
+  shared `formatPercent` function, so there is one place to test it.
 - The form warns as soon as status is set past Appraisal with 0 total homes, before
   submit. The API still enforces it.
 - **Cold start:** Render free tier sleeps after ~15 minutes idle and can take
