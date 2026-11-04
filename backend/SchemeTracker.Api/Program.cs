@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using FluentValidation;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SchemeTracker.Api.Dtos;
@@ -29,6 +30,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+
+builder.Services.AddCors();
+builder.Services.AddOptions<CorsOptions>()
+    .Configure<IConfiguration, IHostEnvironment>((options, configuration, environment) =>
+        options.AddDefaultPolicy(policy => policy
+            .WithOrigins(AllowedOrigins.Parse(configuration[AllowedOrigins.ConfigurationKey], environment.IsDevelopment()))
+            .WithMethods("GET", "POST", "PUT")
+            .AllowAnyHeader()));
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
@@ -69,6 +78,8 @@ else
     // Generic 500 with a trace id. Development keeps the detailed error page.
     app.UseExceptionHandler();
 }
+
+app.UseCors();
 
 app.UseHttpsRedirection();
 

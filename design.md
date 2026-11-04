@@ -420,7 +420,9 @@ models carry MongoDB attributes, they are not free of the database driver.
 ### 5.3 CORS
 
 - Only the Vercel production URL (and `http://localhost:5173` in Development) are
-  allowed. Not `AllowAnyOrigin`.
+  allowed. Not `AllowAnyOrigin`, and a `*` in the setting is ignored.
+- `Cors__AllowedOrigins` is a comma-separated list. If it's empty, the API still starts
+  but allows no browser origins, so the API can be deployed before the Vercel URL exists.
 - Vercel preview URLs change per deploy; allow them by a configured pattern or not
   at all (decision: production URL only, keep it simple).
 
