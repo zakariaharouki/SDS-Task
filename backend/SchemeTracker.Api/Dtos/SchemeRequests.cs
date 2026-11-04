@@ -2,7 +2,19 @@ using SchemeTracker.Api.Models;
 
 namespace SchemeTracker.Api.Dtos;
 
-public record CreateSchemeRequest
+/// <summary>The fields create and update requests share, so both follow the same validation rules.</summary>
+public interface ISchemeRequest
+{
+    string Name { get; }
+
+    string SiteAddress { get; }
+
+    SchemeStatus Status { get; }
+
+    TenureMixDto TenureMix { get; }
+}
+
+public record CreateSchemeRequest : ISchemeRequest
 {
     public required string Name { get; init; }
 
@@ -13,7 +25,7 @@ public record CreateSchemeRequest
     public required TenureMixDto TenureMix { get; init; }
 }
 
-public record UpdateSchemeRequest
+public record UpdateSchemeRequest : ISchemeRequest
 {
     public required string Name { get; init; }
 

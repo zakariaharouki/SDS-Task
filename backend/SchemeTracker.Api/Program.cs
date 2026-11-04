@@ -1,21 +1,37 @@
+using System.Text.Json.Serialization;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using SchemeTracker.Api.Dtos;
 using SchemeTracker.Api.Interfaces;
 using SchemeTracker.Api.Models;
 using SchemeTracker.Api.Options;
 using SchemeTracker.Api.Repositories;
 using SchemeTracker.Api.Services;
+using SchemeTracker.Api.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ValidationExceptionFilter>();
+        options.Filters.Add<ConflictExceptionFilter>();
+        options.ModelBinderProviders.Insert(0, new SchemeStatusModelBinderProvider());
+    })
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = InvalidRequestResponse.Create);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
+builder.Services.AddSingleton<IValidator<SchemeListQuery>, SchemeListQueryValidator>();
 
 // MongoDB: fail at startup if the connection settings are missing.
 builder.Services.AddOptions<MongoOptions>()
@@ -34,6 +50,8 @@ builder.Services.AddSingleton<IMongoCollection<Scheme>>(services =>
         .GetCollection<Scheme>("schemes");
 });
 
+builder.Services.AddHostedService<SchemeIndexInitializer>();
+
 builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
 builder.Services.AddScoped<ISchemeService, SchemeService>();
 
@@ -44,6 +62,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // Generic 500 with a trace id. Development keeps the detailed error page.
+    app.UseExceptionHandler();
 }
 
 app.UseHttpsRedirection();

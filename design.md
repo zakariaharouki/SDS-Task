@@ -80,7 +80,8 @@ tenure types are rare and come with policy change anyway.
 
 - Stored as a string in Mongo (`"OnSite"`), not a number, so the data is readable
   and reordering the enum can't corrupt it.
-- Serialized as the same string in JSON (`JsonStringEnumConverter`).
+- Serialized as the same string in JSON (`SchemeStatusJsonConverter`). It accepts only
+  the exact name; the built-in converter also accepts numbers and ignores case.
 - Sorting by status uses **pipeline order**, not alphabetical (alphabetical would
   put Complete before Planning). Implemented in the Mongo query with
   `$indexOfArray(["Appraisal","Planning","OnSite","Complete"], "$status")`.
@@ -98,7 +99,7 @@ easiest thing to unit test:
 |----------------------|----------------------------------------------------------------|
 | `totalHomes`         | sum of `homes` across all 4 tenures                            |
 | `affordableHomes`    | `socialRent + affordableRent + sharedOwnership` homes          |
-| `affordablePercent`  | `affordableHomes / totalHomes × 100`, rounded to 1 dp; **`null` when `totalHomes = 0`** (UI shows "n/a") |
+| `affordablePercent`  | `affordableHomes / totalHomes × 100`, rounded to 1 dp with midpoints away from zero (0.25 → 0.3); **`null` when `totalHomes = 0`** (UI shows "n/a") |
 | `totalValue`         | sum of `homes × averageValue` across all 4 tenures             |
 
 - **Affordable = social rent + affordable rent + shared ownership**, exactly as the
@@ -133,7 +134,7 @@ the API is the only writer, and `SchemeService` always recalculates before savin
   "siteAddress": "Unit 4, Riverside Road, Leeds LS1 4AB",
   "status": "Planning",
   "tenureMix": { ... as above ... },
-  "totals": { "totalHomes": 150, "affordableHomes": 90, "totalValue": Decimal128("37400000.00") },
+  "totals": { "totalHomes": 150, "affordableHomes": 90, "totalValue": Decimal128("36800000.00") },
   "duplicateKey": "riverside phase 2|unit 4, riverside road, leeds ls1 4ab",
   "version": 3,
   "createdAt": ISODate("2026-11-02T10:00:00Z"),
@@ -174,7 +175,7 @@ feedback, but never relies on them.
 | Total homes vs `status`    | **Total homes must be ≥ 1 when status is `Planning`, `OnSite` or `Complete`.** 0 total homes is only allowed at `Appraisal` |
 | `name` + `siteAddress`     | **Must not match another scheme** (see duplicate rule below). 409 if it does |
 | `version` (PUT only)       | Required; must match the stored version (see 5.4)                    |
-| `id`, `createdAt`, `updatedAt`, totals | Ignored if sent by the client; always set by the server  |
+| `id`, `createdAt`, `updatedAt`, totals | Rejected with a 400 if sent by the client; always set by the server |
 
 Extra decisions:
 
@@ -203,6 +204,10 @@ Extra decisions:
     "check, then insert" in code has a race (two saves at once both pass the check);
     the unique index can't be beaten. The repository catches Mongo's duplicate key
     error (code 11000) and turns it into a 409.
+  - Known limit: a `|` in a name or address can make two different schemes share a
+    key (`A|B` at `C` and `A` at `B|C`), which gives a false 409. Accepted: it needs a
+    `|` and otherwise identical wording, and rewording gets past it. Escaping isn't
+    worth the extra code for such a rare case.
   - On PUT, the scheme can keep its own name and address; the index only clashes
     with *other* documents.
   - Response: **409 Conflict** Problem Details with field errors on `name` and
@@ -267,7 +272,8 @@ Query parameters:
 | `sortBy`  | `status`, `name`, `totalHomes`, `totalValue`, `updatedAt` | `status` |
 | `sortDir` | `asc`, `desc`                                             | `asc`    |
 
-- Invalid `status` / `sortBy` / `sortDir` → 400 (not silently ignored).
+- Invalid `status` / `sortBy` / `sortDir` → 400 (not silently ignored). Values are
+  exact and case-sensitive, so `?status=planning` and `?status=1` are rejected.
 - **Stable sort:** every sort has tie-breakers `name asc`, then `_id`, so rows with
   equal values don't jump around between requests.
 - Each list item includes the computed figures, so the list can show them without
@@ -288,7 +294,7 @@ Response item:
   "totalHomes": 150,
   "affordableHomes": 90,
   "affordablePercent": 60.0,
-  "totalValue": 37400000.00,
+  "totalValue": 36800000.00,
   "version": 3,
   "createdAt": "2026-11-02T10:00:00Z",
   "updatedAt": "2026-11-03T09:12:00Z"
@@ -359,6 +365,7 @@ backend/
   SchemeTracker.Api/
     Controllers/    HTTP only: routes, status codes
     Dtos/           Request and response shapes (the API contract)
+    Exceptions/     Conflicts with existing data, returned as 409
     Interfaces/     ISchemeService, ISchemeRepository
     Mapping/        DTO ↔ model copying, no business rules
     Models/         Scheme, TenureMix, TenureLine, SchemeTotals, SchemeStatus,
@@ -366,12 +373,14 @@ backend/
     Options/        MongoOptions
     Repositories/   SchemeRepository
     Services/       SchemeService
+    Validation/     Validators, request error responses
     Program.cs      Service registration, pipeline
   SchemeTracker.Tests/   Unit and integration tests, one project
   Dockerfile
 ```
 
-`SchemeCalculator`, the validators and the `Dockerfile` are planned but not added yet.
+`SchemeCalculator` and `SchemeDuplicateKey` are in `Services/`. The `Dockerfile` is
+planned but not added yet.
 
 ### 5.1 Layers
 
@@ -430,6 +439,8 @@ other (last write wins). Cheap to add, and a good "what would break" answer.
 
 - All timestamps UTC (`DateTime.UtcNow` via an injected `TimeProvider`, so tests can
   control time). The UI converts to local time for display.
+- Timestamps are set to whole milliseconds, because that's all MongoDB stores, so a
+  create response matches the same scheme when it is read back.
 
 ---
 
@@ -508,6 +519,10 @@ Status ordering: pipeline order, not alphabetical.
 
 Real Mongo in Docker, so `Decimal128` mapping, collation and sorting are actually tested.
 
+The tests use `mongo:7.0`, because 8.0 and newer refuse to start on Linux kernels 6.19
+to 7.0.13, which CI runners currently use. Trade-off: the tests run on an older major
+version than Atlas may use. Move up once runners reach kernel 7.0.14.
+
 - POST valid → 201 + Location; GET by id returns same data with figures
 - POST invalid → 400 with expected field keys
 - `"homes": 2.5`, unknown status, unknown property → 400 friendly message
@@ -554,7 +569,9 @@ CI (see 5.2). Badge in README.
 - **Atlas network access is `0.0.0.0/0`.** Reason: Render's free tier has no static
   outbound IPs. Trade-off: security relies on the strong DB password + TLS only.
   With a paid tier, I'd restrict to Render's static IPs.
-- Indexes created at startup (idempotent `CreateMany`).
+- Indexes created at startup (idempotent `CreateMany`). If that fails, the API stops,
+  because the unique index is what blocks duplicates. So the API needs a reachable
+  MongoDB to start, including in local development.
 - A seed script / endpoint-free seed (`dotnet run -- seed`) with ~8 realistic schemes
   across all statuses, so reviewers don't open an empty app. Not exposed over HTTP.
 
