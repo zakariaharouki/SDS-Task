@@ -4,6 +4,7 @@ import type {
   Scheme,
   SchemeStatus,
   SchemeSummary,
+  UpdateSchemeRequest,
 } from '../types/scheme'
 import {
   DEFAULT_SCHEME_QUERY,
@@ -106,9 +107,25 @@ export const getSchemeSummary = (statuses: SchemeStatus[] = []) =>
     ),
   )
 
+const sendJson = (method: 'POST' | 'PUT', body: unknown): RequestInit => ({
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+})
+
+const schemePath = (id: string) => `/api/schemes/${encodeURIComponent(id)}`
+
+export const getScheme = (id: string) => getJson<Scheme>(schemePath(id))
+
 export const createScheme = (scheme: CreateSchemeRequest) =>
-  getJson<Scheme>('/api/schemes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(scheme),
-  })
+  getJson<Scheme>('/api/schemes', sendJson('POST', scheme))
+
+export const updateScheme = (id: string, scheme: UpdateSchemeRequest) =>
+  getJson<Scheme>(schemePath(id), sendJson('PUT', scheme))
+
+export const isNotFound = (error: unknown) =>
+  error instanceof ApiError && error.status === 404
+
+// A duplicate is also a 409, but it comes with field errors and can be fixed on the form.
+export const isVersionConflict = (error: unknown) =>
+  error instanceof ApiError && error.status === 409 && !error.problem?.errors

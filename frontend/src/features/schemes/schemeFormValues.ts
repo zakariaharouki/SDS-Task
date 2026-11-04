@@ -1,5 +1,6 @@
 import type {
   CreateSchemeRequest,
+  Scheme,
   SchemeStatus,
   TenureLine,
   TenureMix,
@@ -40,6 +41,24 @@ export const NEW_SCHEME_VALUES: SchemeFormValues = {
     sharedOwnership: emptyLine,
     marketSale: emptyLine,
   },
+}
+
+export const toFormValues = ({
+  name,
+  siteAddress,
+  status,
+  tenureMix,
+}: Scheme): SchemeFormValues => {
+  const lines = {} as SchemeFormValues['tenureMix']
+
+  TENURES.forEach(({ key }) => {
+    lines[key] = {
+      homes: String(tenureMix[key].homes),
+      averageValue: String(tenureMix[key].averageValue),
+    }
+  })
+
+  return { name, siteAddress, status, tenureMix: lines }
 }
 
 const toTenureLine = ({ homes, averageValue }: TenureLineValues): TenureLine => ({

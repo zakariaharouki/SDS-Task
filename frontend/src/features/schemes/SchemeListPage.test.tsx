@@ -221,10 +221,13 @@ describe('SchemeListPage', () => {
   it('opens the edit page of the chosen scheme', async () => {
     const leeds = makeScheme({ id: 'leeds-id', siteAddress: 'Leeds' })
     const york = makeScheme({ id: 'york-id', siteAddress: 'York' })
-    respondWith(
-      () => json([leeds, york]),
-      () => json(summary),
-    )
+    fetchMock.mockImplementation(async (url) => {
+      if (url === SUMMARY_URL) {
+        return json(summary)
+      }
+
+      return url === `${LIST_URL}/york-id` ? json(york) : json([leeds, york])
+    })
     renderApp()
 
     fireEvent.click(
@@ -234,5 +237,8 @@ describe('SchemeListPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Edit scheme' }),
     ).toBeTruthy()
+    expect(
+      ((await screen.findByLabelText('Site address')) as HTMLInputElement).value,
+    ).toBe('York')
   })
 })

@@ -1,7 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeScheme } from '../test/schemes'
 import type { SchemeSummary } from '../types/scheme'
-import { ApiError, createScheme, getSchemes, getSchemeSummary } from './client'
+import {
+  ApiError,
+  createScheme,
+  getScheme,
+  getSchemes,
+  getSchemeSummary,
+  isNotFound,
+  isVersionConflict,
+  updateScheme,
+} from './client'
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -129,6 +138,55 @@ describe('createScheme', () => {
 
     expect(error.status).toBe(400)
     expect(error.problem?.errors).toEqual(errors)
+  })
+})
+
+describe('getScheme and updateScheme', () => {
+  it('getScheme reads one scheme by id, safely encoded', async () => {
+    fetchMock.mockResolvedValue(json(makeScheme()))
+
+    await getScheme('a/b c')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.test/api/schemes/a%2Fb%20c',
+    )
+  })
+
+  it('updateScheme puts the scheme as JSON', async () => {
+    const { tenureMix } = makeScheme()
+    const request = {
+      name: 'Riverside',
+      siteAddress: 'Leeds',
+      status: 'Planning' as const,
+      tenureMix,
+      version: 2,
+    }
+    fetchMock.mockResolvedValue(json(makeScheme()))
+
+    await updateScheme('abc', request)
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.test/api/schemes/abc')
+    expect(init?.method).toBe('PUT')
+    expect(JSON.parse(String(init?.body))).toEqual(request)
+  })
+
+  it.each([
+    [new ApiError('x', 409), true],
+    [new ApiError('x', 409, { type: 't', title: 'x', status: 409, errors: { name: ['y'] } }), false],
+    [new ApiError('x', 404), false],
+    [new Error('x'), false],
+  ])('isVersionConflict of %s gives %s', (error, expected) => {
+    expect(isVersionConflict(error)).toBe(expected)
+  })
+
+  it.each([
+    [new ApiError('x', 404), true],
+    [new ApiError('x', 500), false],
+    [new ApiError('x', null), false],
+    [new Error('x'), false],
+  ])('isNotFound of %s gives %s', (error, expected) => {
+    expect(isNotFound(error)).toBe(expected)
   })
 })
 

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useForm, useWatch, type FieldPath } from 'react-hook-form'
 import { Link } from 'react-router'
 import { SCHEME_STATUSES } from '../../api/schemeQuery'
@@ -30,6 +30,7 @@ interface SchemeFormProps {
   submitLabel: string
   backTo: string
   onSubmit: (scheme: CreateSchemeRequest) => Promise<void>
+  notice?: ReactNode
 }
 
 interface FieldErrorProps {
@@ -53,6 +54,7 @@ export default function SchemeForm({
   submitLabel,
   backTo,
   onSubmit,
+  notice,
 }: SchemeFormProps) {
   const {
     register,
@@ -313,6 +315,8 @@ export default function SchemeForm({
       {errors.root?.server?.message && (
         <ErrorBanner message={errors.root.server.message} onRetry={submit} />
       )}
+
+      {notice}
 
       {isSubmitting && <LoadingState label="Saving…" />}
 
