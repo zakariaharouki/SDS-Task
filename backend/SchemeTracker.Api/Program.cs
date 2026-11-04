@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using FluentValidation;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SchemeTracker.Api.Dtos;
@@ -28,6 +29,15 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
+
+builder.Services.AddCors();
+builder.Services.AddOptions<CorsOptions>()
+    .Configure<IConfiguration, IHostEnvironment>((options, configuration, environment) =>
+        options.AddDefaultPolicy(policy => policy
+            .WithOrigins(AllowedOrigins.Parse(configuration[AllowedOrigins.ConfigurationKey], environment.IsDevelopment()))
+            .WithMethods("GET", "POST", "PUT")
+            .AllowAnyHeader()));
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IValidator<ISchemeRequest>, SchemeRequestValidator>();
@@ -58,22 +68,27 @@ builder.Services.AddScoped<ISchemeService, SchemeService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     // Generic 500 with a trace id. Development keeps the detailed error page.
     app.UseExceptionHandler();
 }
 
-app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseCors();
+
+// Render handles HTTPS before requests reach the app, so only redirect in Development.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 

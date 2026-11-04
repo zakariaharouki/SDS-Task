@@ -1,0 +1,16 @@
+# Secrets must never reach the image.
+**/.env
+**/.env.*
+**/secrets.json
+
+# Build output, which would conflict with the build inside the image.
+**/bin/
+**/obj/
+
+# Not needed to run the API.
+SchemeTracker.Tests/
+**/*.http
+**/*.user
+**/.vs/
+Dockerfile
+.dockerignore

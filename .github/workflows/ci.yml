@@ -18,6 +18,83 @@ jobs:
       - run: dotnet build backend/SchemeTracker.sln
       - run: dotnet test backend/SchemeTracker.sln --no-build
 
+  # Builds the image Render will use and runs it the same way: a custom $PORT, the Production
+  # environment and settings from environment variables. MongoDB here is throwaway, not Atlas.
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: scheme-tracker-api
+      API: http://localhost:9000
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the image
+        run: docker build -t "$IMAGE" backend
+
+      - name: Check that no secrets or tests are in the image
+        run: |
+          files=$(docker run --rm --entrypoint sh "$IMAGE" -c 'ls -A /app')
+          if echo "$files" | grep -E '^\.env|secrets\.json|Tests'; then
+            echo "Found files that must not be in the image"
+            exit 1
+          fi
+
+      - name: Check that it stops when MongoDB settings are missing
+        run: |
+          code=0
+          timeout 60 docker run --rm "$IMAGE" || code=$?
+          echo "Exit code: $code"
+          [ "$code" -ne 0 ] && [ "$code" -ne 124 ]
+
+      - name: Start MongoDB and the API
+        run: |
+          docker network create smoke
+          docker run -d --name mongo --network smoke mongo:7.0
+          docker run -d --name api --network smoke -p 9000:9000 \
+            -e PORT=9000 \
+            -e Mongo__ConnectionString=mongodb://mongo:27017 \
+            -e Mongo__Database=smoke \
+            "$IMAGE"
+
+      - name: Wait for /health on $PORT
+        run: |
+          for attempt in $(seq 1 45); do
+            if curl -fsS "$API/health"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "The API did not become healthy"
+          exit 1
+
+      - name: Check it runs as non-root in Production
+        run: |
+          uid=$(docker exec api id -u)
+          echo "User id: $uid"
+          [ "$uid" != "0" ]
+          [ -z "$(docker exec api printenv ASPNETCORE_ENVIRONMENT || true)" ]
+
+      - name: Check Swagger and a real save through the API
+        run: |
+          curl -fsS "$API/swagger/v1/swagger.json" > /dev/null
+
+          line='{"homes":10,"averageValue":100.00}'
+          body="{\"name\":\"Smoke\",\"siteAddress\":\"Leeds\",\"status\":\"Planning\",\"tenureMix\":{\"socialRent\":$line,\"affordableRent\":$line,\"sharedOwnership\":$line,\"marketSale\":$line}}"
+
+          post() {
+            curl -s -o /dev/null -w '%{http_code}' -X POST "$API/api/schemes" -H 'Content-Type: application/json' -d "$body"
+          }
+
+          first=$(post)
+          second=$(post)
+          echo "First save: $first, duplicate: $second"
+          [ "$first" = "201" ]
+          [ "$second" = "409" ]
+
+      - name: Show the API logs if anything failed
+        if: failure()
+        run: docker logs api || true
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
