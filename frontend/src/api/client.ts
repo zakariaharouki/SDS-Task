@@ -1,4 +1,14 @@
-import type { ProblemDetails, Scheme, SchemeSummary } from '../types/scheme'
+import type {
+  ProblemDetails,
+  Scheme,
+  SchemeStatus,
+  SchemeSummary,
+} from '../types/scheme'
+import {
+  DEFAULT_SCHEME_QUERY,
+  toSearchParams,
+  type SchemeQuery,
+} from './schemeQuery'
 
 export class ApiError extends Error {
   // null when no response arrived, for example when the server can't be reached.
@@ -79,7 +89,18 @@ const getJson = async <T>(path: string): Promise<T> => {
   return body as T
 }
 
-export const getSchemes = () => getJson<Scheme[]>('/api/schemes')
+const withParams = (path: string, params: URLSearchParams) => {
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
+}
 
-export const getSchemeSummary = () =>
-  getJson<SchemeSummary>('/api/schemes/summary')
+export const getSchemes = (query: SchemeQuery = DEFAULT_SCHEME_QUERY) =>
+  getJson<Scheme[]>(withParams('/api/schemes', toSearchParams(query)))
+
+export const getSchemeSummary = (statuses: SchemeStatus[] = []) =>
+  getJson<SchemeSummary>(
+    withParams(
+      '/api/schemes/summary',
+      toSearchParams({ ...DEFAULT_SCHEME_QUERY, statuses }),
+    ),
+  )

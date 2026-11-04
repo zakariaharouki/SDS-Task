@@ -72,6 +72,32 @@ describe('successful requests', () => {
   })
 })
 
+describe('filter and sort', () => {
+  it('getSchemes sends repeated statuses and the sort', async () => {
+    fetchMock.mockResolvedValue(json([]))
+
+    await getSchemes({
+      statuses: ['Planning', 'OnSite'],
+      sortBy: 'totalValue',
+      sortDir: 'desc',
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.test/api/schemes?status=Planning&status=OnSite&sortBy=totalValue&sortDir=desc',
+    )
+  })
+
+  it('getSchemeSummary sends only the statuses', async () => {
+    fetchMock.mockResolvedValue(json({}))
+
+    await getSchemeSummary(['Complete'])
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.test/api/schemes/summary?status=Complete',
+    )
+  })
+})
+
 describe('error responses', () => {
   it('keeps the status and field errors from a Problem Details response', async () => {
     const problem = {

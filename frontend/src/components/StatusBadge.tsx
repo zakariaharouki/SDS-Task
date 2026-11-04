@@ -1,14 +1,8 @@
+import { statusLabels } from '../lib/format'
 import type { SchemeStatus } from '../types/scheme'
 
 interface StatusBadgeProps {
   status: SchemeStatus
-}
-
-const labels: Record<SchemeStatus, string> = {
-  Appraisal: 'Appraisal',
-  Planning: 'Planning',
-  OnSite: 'On site',
-  Complete: 'Complete',
 }
 
 const colors: Record<SchemeStatus, string> = {
@@ -31,7 +25,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
         whiteSpace: 'nowrap',
       }}
     >
-      {labels[status]}
+      {statusLabels[status]}
     </span>
   )
 }

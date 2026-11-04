@@ -467,6 +467,10 @@ frontend/
   their `errors` keys (e.g. `tenureMix.marketSale.averageValue`).
 - **Filter and sort state live in the URL** (`/?status=Planning&sortBy=totalValue&sortDir=desc`).
   Reason: survives reload, back button works, and a tester can share a link.
+  The filter allows several statuses, and the summary cards follow it. The table
+  sorts by name, status, total homes or total value; `updatedAt` stays API-only
+  because the table has no column for it. Values the page doesn't recognise in the
+  address are ignored, so a bad link shows the normal list instead of an error.
 - Tenure mix is shown as a fixed 4-row table in the form (tenure, homes, average
   value, line value), matching the fixed object in the API.
 - Line values and totals shown in the form while typing are labelled as a
