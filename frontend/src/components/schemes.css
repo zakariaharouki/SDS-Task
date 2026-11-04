@@ -1,0 +1,72 @@
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  padding: 20px;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.summary-card p {
+  margin: 0 0 10px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.summary-card strong {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.schemes-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.schemes-table caption {
+  padding: 12px 0;
+  text-align: left;
+  font-weight: 600;
+}
+
+.schemes-table th,
+.schemes-table td {
+  padding: 14px;
+  border-bottom: 1px solid #dbe2ea;
+  text-align: left;
+}
+
+.schemes-table thead th {
+  background: #f1f5f9;
+  white-space: nowrap;
+}
+
+.schemes-table button {
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.schemes-table button:hover {
+  background: #f1f5f9;
+}
+
+.schemes-table button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
